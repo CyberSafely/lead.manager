@@ -1,1 +1,1 @@
-# lead.manager
+Official CyberSafely.AI Lead Manager
