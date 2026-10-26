@@ -1,0 +1,1679 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>School Pipeline</title>
+<style>
+:root{
+  --bg:#f6f7f9;--panel:#fff;--ink:#1b1f24;--muted:#5d6670;--line:#e2e5ea;--accent:#2457d6;--accent-ink:#fff;
+  --ok:#1f7a4d;--warn:#a15c00;--bad:#b42318;--chip:#eef1f6;--hover:#f0f3f8;
+  --s0:#9aa3ad;--s1:#5b8def;--s2:#8b6cf0;--s3:#e0a03a;--s4:#1f9d5c;--sx:#c9ced6;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    --bg:#111418;--panel:#1a1e24;--ink:#e6e9ee;--muted:#9aa3ad;--line:#2b3139;--accent:#6d93ff;--accent-ink:#0d1117;
+    --ok:#4cc38a;--warn:#e0a03a;--bad:#ff6b5e;--chip:#252b33;--hover:#222830;
+    --s0:#6b737d;--s1:#6d93ff;--s2:#a48cff;--s3:#f0b44c;--s4:#3fbf7f;--sx:#3a414a;
+  }
+}
+:root[data-theme="dark"]{
+  --bg:#111418;--panel:#1a1e24;--ink:#e6e9ee;--muted:#9aa3ad;--line:#2b3139;--accent:#6d93ff;--accent-ink:#0d1117;
+  --ok:#4cc38a;--warn:#e0a03a;--bad:#ff6b5e;--chip:#252b33;--hover:#222830;
+  --s0:#6b737d;--s1:#6d93ff;--s2:#a48cff;--s3:#f0b44c;--s4:#3fbf7f;--sx:#3a414a;
+}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:14px/1.45 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+header{display:flex;align-items:center;gap:16px;padding:12px 20px;background:var(--panel);border-bottom:1px solid var(--line);position:sticky;top:0;z-index:5;flex-wrap:wrap}
+.gs{position:relative}
+.gs input{width:260px}
+.gs-r{position:absolute;top:calc(100% + 4px);left:0;right:0;max-height:360px;overflow:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 12px rgba(0,0,0,.15);z-index:10;display:none}
+.gs-r.open{display:block}
+.gs-r button{display:block;width:100%;text-align:left;background:none;border:0;border-bottom:1px solid var(--line);padding:8px 10px;cursor:pointer;color:var(--ink)}
+.gs-r button:hover,.gs-r button.sel{background:var(--line)}
+.gs-r .gs-badge{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.5px}
+.gs-r .gs-empty{padding:10px;color:var(--muted);font-size:13px}
+header h1{font-size:16px;margin:0;font-weight:650}
+nav{display:flex;gap:4px;flex-wrap:wrap}
+nav button{background:none;border:0;padding:7px 12px;border-radius:6px;color:var(--muted);cursor:pointer;font:inherit}
+nav button.on{background:var(--chip);color:var(--ink);font-weight:600}
+nav button .n{display:inline-block;min-width:18px;padding:0 5px;margin-left:4px;border-radius:9px;background:var(--bad);color:#fff;font-size:11px;text-align:center}
+main{padding:20px;max-width:1300px;margin:0 auto}
+.banner{padding:8px 12px;border-radius:8px;background:var(--chip);color:var(--muted);font-size:13px;margin-bottom:14px}
+.banner.warn{border-left:3px solid var(--warn)}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap}
+.grow{flex:1}
+input,select,textarea{font:inherit;color:var(--ink);background:var(--panel);border:1px solid var(--line);border-radius:6px;padding:6px 8px;max-width:100%}
+textarea{width:100%;min-height:80px;resize:vertical}
+button.b,label.b{font:inherit;border:1px solid var(--line);background:var(--panel);color:var(--ink);padding:6px 11px;border-radius:6px;cursor:pointer}
+button.b:hover,label.b:hover{background:var(--hover)}
+button.p{background:var(--accent);border-color:var(--accent);color:var(--accent-ink)}
+button.d{color:var(--bad)}
+button.sm{padding:3px 8px;font-size:12px}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:10px;padding:14px}
+.grid{display:grid;gap:12px}
+.kpis{grid-template-columns:repeat(auto-fit,minmax(160px,1fr))}
+.kpi .v{font-size:26px;font-weight:650}
+.kpi .l{color:var(--muted);font-size:12px}
+.kpi .s{color:var(--muted);font-size:12px;margin-top:2px}
+table{width:100%;border-collapse:collapse;background:var(--panel)}
+th,td{text-align:left;padding:7px 9px;border-bottom:1px solid var(--line);vertical-align:middle}
+th{font-size:12px;color:var(--muted);font-weight:600;position:sticky;top:0;background:var(--panel)}
+tr.click:hover td{background:var(--hover);cursor:pointer}
+.tablewrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px}
+.chip{display:inline-block;padding:1px 8px;border-radius:10px;background:var(--chip);font-size:12px;white-space:nowrap}
+.over{color:var(--bad);font-weight:600}
+.today{color:var(--warn);font-weight:600}
+.muted{color:var(--muted)}
+.small{font-size:12px}
+h2{font-size:15px;margin:18px 0 8px}
+h3{font-size:13px;margin:12px 0 6px;color:var(--muted);text-transform:uppercase;letter-spacing:.04em}
+.strip{display:grid;grid-template-columns:repeat(5,1fr) auto auto;gap:6px;margin-bottom:16px}
+.strip button{border:1px solid var(--line);background:var(--panel);border-radius:10px;padding:10px 12px;text-align:left;cursor:pointer;font:inherit;color:var(--ink);position:relative;overflow:hidden}
+.strip button::before{content:"";position:absolute;left:0;top:0;bottom:0;width:4px;background:var(--c)}
+.strip button.on{outline:2px solid var(--c)}
+.strip .v{font-size:24px;font-weight:650;line-height:1.1}
+.strip .l{font-size:12px;color:var(--muted)}
+.strip .r{font-size:11px;color:var(--muted)}
+.strip .closed{min-width:130px}
+.strip.calls{grid-template-columns:repeat(6,1fr)}
+.steps{display:inline-flex;gap:3px;align-items:center}
+.steps i{display:block;width:22px;height:6px;border-radius:3px;background:var(--sx)}
+.steps i.on{background:var(--c)}
+.steps i.half{background:linear-gradient(90deg,var(--c) 50%,var(--sx) 50%)}
+.stlabel{font-size:12px;margin-top:3px}
+.dot{display:inline-block;width:9px;height:9px;border-radius:50%;background:var(--c);margin-right:5px;vertical-align:middle}
+.board{display:flex;gap:10px;overflow-x:auto;padding-bottom:8px}
+.col{min-width:230px;width:230px;background:var(--chip);border-radius:10px;padding:8px;flex-shrink:0;border-top:4px solid var(--c)}
+.col h4{margin:2px 4px 2px;font-size:13px;display:flex;justify-content:space-between}
+.col .ph{font-size:11px;color:var(--muted);margin:0 4px 8px}
+.col.drop{outline:2px dashed var(--accent)}
+.tile{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:8px;margin-bottom:6px;cursor:grab;font-size:13px}
+.tile .t{font-weight:600}
+.stack{display:flex;height:14px;border-radius:4px;overflow:hidden;background:var(--sx);min-width:120px}
+.stack span{display:block;height:100%}
+#drawer{position:fixed;top:0;right:0;height:100%;width:min(580px,100%);background:var(--panel);border-left:1px solid var(--line);box-shadow:-8px 0 24px rgba(0,0,0,.12);transform:translateX(100%);transition:transform .18s;z-index:20;overflow-y:auto;padding:18px}
+#drawer.open{transform:none}
+.f{display:grid;grid-template-columns:140px 1fr;gap:6px 10px;align-items:center}
+.f label{color:var(--muted);font-size:12px}
+.log{border-left:2px solid var(--line);padding-left:10px;margin:6px 0}
+.log div{margin-bottom:8px}
+.bar{height:8px;background:var(--accent);border-radius:4px}
+.barrow{display:grid;grid-template-columns:120px 1fr 40px;gap:8px;align-items:center;margin:4px 0;font-size:13px}
+pre.tpl{white-space:pre-wrap;background:var(--chip);padding:10px;border-radius:8px;font:13px/1.5 system-ui,sans-serif;margin:6px 0;max-height:440px;overflow:auto}
+.flow{display:flex;flex-wrap:wrap;gap:6px;align-items:center;font-size:12px;margin:6px 0}
+.flow span.s{background:var(--chip);padding:3px 8px;border-radius:6px}
+.hide{display:none!important}
+.ds{display:inline-flex;border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.ds button{background:var(--panel);border:0;padding:7px 14px;font:inherit;color:var(--muted);cursor:pointer}
+.ds button+button{border-left:1px solid var(--line)}
+.ds button.on{background:var(--accent);color:var(--accent-ink);font-weight:600}
+.subl{border:1px solid var(--line);border-radius:8px;overflow:hidden}
+.subl .it{display:grid;grid-template-columns:1fr auto;gap:2px 10px;padding:8px 10px;border-bottom:1px solid var(--line);cursor:pointer}
+.subl .it:last-child{border-bottom:0}
+.subl .it:hover{background:var(--hover)}
+code{background:var(--chip);padding:0 4px;border-radius:4px;font-size:12px}
+@media (max-width:760px){
+  main{padding:16px}
+  header{padding:10px 16px}
+  .f{grid-template-columns:1fr}
+  .strip{grid-template-columns:repeat(3,1fr)}
+  .strip.calls{grid-template-columns:repeat(2,1fr)}
+}
+</style>
+</head>
+<body>
+<header>
+  <h1>CyberSafely Lead Manager</h1>
+  <div class="ds" id="dsSwitch"><button data-ds="principal">Principals</button><button data-ds="overseer">Overseers</button><button data-ds="campaign">Campaigns</button><button data-ds="pta">PTA</button><button data-ds="user">Users</button></div>
+  <nav id="nav"></nav>
+  <div class="gs"><input id="gs" type="search" placeholder="Search all lists… (name, school, email, phone)" autocomplete="off"><div id="gsr" class="gs-r"></div></div>
+  <div class="grow"></div>
+  <span class="small muted" id="savedAt"></span>
+</header>
+<main id="main"></main>
+<aside id="drawer"></aside>
+
+<!-- Email templates synced from the vault's Emails/ folder (python3 .claude/scripts/sync-emails.py). Optional: built-in defaults are used if it's missing. -->
+<script src="email-templates.js"></script>
+<script src="district-boundaries.js"></script>
+<script>
+"use strict";
+/* ---------- pipeline ---------- */
+// One lead = one principal = one school. Simplified flow: one email with a forward-ready family message;
+// success is measured by sign-ups on the school's code. "We send it for you" is the exception.
+const MAIN = ["new","contacted","engaged","live","active"];
+const STAGES = [
+  {id:"new",      name:"Cold",      desc:"Not contacted yet",                        c:"--s0"},
+  {id:"contacted",name:"Contacted", desc:"In the 3-touch sequence",                   c:"--s1"},
+  {id:"rejected", name:"Rejected",  desc:"Email bounced or was rejected",             c:"--bad"},
+  {id:"engaged",  name:"Engaged",   desc:"Replied, talked, or says they shared it",   c:"--s2"},
+  {id:"live",     name:"Live",      desc:"First family sign-ups on the school's code",c:"--s3"},
+  {id:"active",   name:"Active",    desc:"Sign-ups at the target level",              c:"--s4"},
+  {id:"nurture",  name:"Nurture",   desc:"No reply after 3 touches",                  c:"--sx"},
+  {id:"lost",     name:"Declined",  desc:"Said no, or wrong contact",                 c:"--sx"}
+];
+const STAGE = Object.fromEntries(STAGES.map((s,i)=>[s.id,{...s,i}]));
+// List order (lists sort high → low): Rejected sits just below Contacted.
+const RANK = id=>id==="rejected"?STAGE.contacted.i-0.5:STAGE[id].i;
+const SEQ = ["","Email 1 sent","Call / bump done","Last email sent"];
+const ACTS = ["Call: reached","Voicemail","Front office message","Reply received","Says they shared it","Meeting / demo","Note"];
+// Call outcomes: Torino's five categories for principals who opened the emails (Oct 7, 2026).
+// Each sets the stage and queues the matching follow-up email (sent from Thursday).
+const CALLS = {
+  interested:{name:"Interested / Ready to move forward",short:"Interested",c:"--ok",  tpl:"f1",next:"Send next steps (F1)",stage:"engaged"},
+  info:      {name:"Needs more information",            short:"Needs info", c:"--s1",  tpl:"f2",next:"Answer questions + send summary (F2)",      stage:"engaged"},
+  followup:  {name:"Follow-up needed",                  short:"Follow-up",  c:"--warn",tpl:"f2",next:"Send short summary (F2), then call back",   stage:"contacted"},
+  not:       {name:"Not interested",                    short:"Not interested",c:"--bad",tpl:"r2",next:"Send polite close (R2)",               stage:"lost"},
+  unreach:   {name:"Unable to reach",                   short:"No answer",  c:"--muted",tpl:"f3",next:"Voicemail left → send follow-up email (F3)",stage:"contacted"}
+};
+const CALL_IDS = Object.keys(CALLS);
+const KEY = "cs-outreach-v1";
+const TPL_VERSION = 6;
+
+function callPending(l){const c=l.call&&CALLS[l.call.status];return c&&!["live","active"].includes(l.stage)&&!(l.sent||[]).includes(c.tpl)?c:null;}
+function nextFor(l){
+  const s=l.stage, q=l.seq||0;
+  const c=callPending(l); if(c&&s!=="lost")return [c.next,1];
+  if(s==="new") return l.type==="pta"?["Send PTA intro (PT1)",0]:l.type==="user"?["Send check-in email (U1)",0]:l.type==="campaign"?["Send a personal follow-up email",0]:["Send first email (E1)",0];
+  if(s==="contacted"&&(l.type==="pta"||l.type==="user")) return ["No reply? Send a short personal follow-up",5];
+  if(s==="contacted") return q<=1?["Day 4: call. No answer → voicemail + E2",4]:q===2?["Day 10: last email (E3)",4]:["No reply: moves to Nurture",4];
+  if(s==="engaged") return l.path==="we"?["We send it: get contacts (R3), send family message",2]:
+                    l.shared?["Check sign-ups on the school's code",5]:["Check sign-ups; nudge (G1) if none",8];
+  if(s==="live") return (l.sent||[]).includes("g2")?["Monthly update (G3)",20]:["Send thank-you + reminder (G2)",0];
+  if(s==="active") return ["Monthly update (G3)",20];
+  if(s==="nurture") return ["Re-try with a fresh angle (E3)",30];
+  if(s==="rejected") return ["Find a working email, then re-send",null];
+  return null;
+}
+function suggestTpl(l){
+  const s=l.stage,q=l.seq||0,sent=l.sent||[];
+  const c=callPending(l); if(c)return c.tpl;
+  if(s==="new")return l.type==="overseer"?"d1":l.type==="pta"?"pt1":l.type==="user"?"u1":l.type==="campaign"?null:"e1";
+  if((l.type==="pta"||l.type==="user")&&s==="contacted")return null;
+  if(s==="contacted")return q<=1?"e2":"e3";
+  if(s==="engaged")return l.path==="we"?"r3":"g1";
+  if(s==="live")return sent.includes("g2")?"g3":"g2";
+  if(s==="active")return"g3";
+  if(s==="nurture")return"e3";
+  if(s==="rejected")return sent[sent.length-1]||(l.type==="overseer"?"d1":"e1");
+  return"r2";
+}
+
+/* ---------- email templates ---------- */
+// to: stage after logging as sent (forward only). seq: outreach touch number. path: sets who sends.
+const DEFAULT_TEMPLATES = [
+ {id:"d1",phase:"0 · District overseers",name:"D1 · District cold intro (heads-up)",to:"contacted",seq:1,subject:"A free year of CyberSafely.ai for {{district}} families",body:
+`Hi {{greeting}},
+
+I'm {{sender}} with CyberSafely.ai. I wanted to give you a quick heads-up about some good news for families in {{district}}.
+
+Through CyberSafely.ai's collaboration with MSBA, every 5th through 9th grade family in Missouri can use CyberSafely.ai free for one full year.
+
+CyberSafely.ai is an app for parents. It alerts them early if their child may be facing something serious online, like bullying, grooming or sextortion, so they can step in before it escalates.
+
+I've reached out to principals in your district so their families can sign up. For schools, there's no contract, no MOU and no cost. We've already written the message for families, and each school has its own sign-up link.
+
+Nothing is needed from you. If you'd like a quick 15-minute walkthrough, just reply with a good day and time (Central time) and I'll call you.
+
+Thank you,
+{{sender}}
+CyberSafely.ai
+{{phone}}
+[CyberSafely.ai mailing address]
+
+P.S. If this isn't a fit, reply "no thanks" and I won't follow up.`},
+ {id:"e1",phase:"1 · Outreach (3 touches)",name:"E1 · First email + family message (day 0)",to:"contacted",seq:1,subject:"Your {{school}} family message is ready",body:
+`Hi {{greeting}},
+
+Following up on Mike Nutter's note: through CyberSafely.ai's collaboration with MSBA, every 5th through 9th grade family at {{school}} gets a free year of CyberSafely.ai.
+
+It's a parent app that flags trouble early, like bullying, grooming or sextortion, so parents can step in before it escalates.
+
+We've already done the work. The message for your families is below, with {{school}}'s sign-up link built in. Forward it to your 5th–9th grade parents in your next email or newsletter, and that's it.
+
+Office stretched thin? Reply with your PTA or parent contact and we'll send it ourselves. Either way, your families get it.
+
+It may be the easiest yes on your desk this week: no contract, no MOU, no cost. Just one forward.
+
+Thank you,
+{{sender}}
+CyberSafely.ai
+{{phone}}
+[CyberSafely.ai mailing address]
+
+P.S. Not a fit for {{school}}? Reply "no thanks" and I'll close the loop.
+
+———— Message for {{school}} families (ready to forward) ————
+
+{{parent_email}}`},
+ {id:"e2",phase:"1 · Outreach (3 touches)",name:"E2 · After a call attempt (day 4)",to:"contacted",seq:2,subject:"Following up on Torino's message: {{school}}",body:
+`Hi {{greeting}},
+
+I'm following up on the message Torino Fitzgerald left you about the free year of CyberSafely.ai for {{school}}'s 5th–9th grade families. I'm {{sender}}, on Torino's team at CyberSafely.ai, and I'm your point of contact for getting this to your parents.
+
+I gave you a call today and left a short voicemail, so here's the 30-second version.
+
+Through our collaboration with MSBA, your families have a free year waiting. No contract, no MOU, no cost. The only step left is getting the word to parents.
+
+The family message is below, with {{school}}'s sign-up link built in. Forward it in your next parent email or newsletter, and that's it.
+
+Swamped? Reply "send it" with your PTA or parent contact, and we'll handle delivery.
+
+{{sender}}
+CyberSafely.ai
+{{phone}}
+
+P.S. Torino and I are working on {{school}}'s rollout together, so a reply to either of us gets it moving. Not a fit? Reply "no thanks" and I won't follow up.
+
+———— Message for {{school}} families (ready to forward) ————
+
+{{parent_email}}`},
+ {id:"e3",phase:"1 · Outreach (3 touches)",name:"E3 · Last email: right person? (day 10)",to:"contacted",seq:3,subject:"Who handles parent emails at {{school}}?",body:
+`Hi {{greeting}},
+
+A principal's inbox is a contact sport, so I'll keep this one short.
+
+Who at {{school}} sends news to families? A counselor, assistant principal or PTA lead is perfect. Reply with a name and I'll take it from there, without adding anything to your plate.
+
+Your 5th–9th grade families' free year is still waiting whenever you're ready.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"r1",phase:"2 · Replies",name:"R1 · Has questions / wants a call",to:"engaged",subject:"Re: Your {{school}} family message is ready",body:
+`Hi {{greeting}},
+
+Glad you asked. Ten minutes on the phone will cover it. Do any of these work (Central time)?
+
+- [Day, time]
+- [Day, time]
+- [Day, time]
+
+If none fit, send me a time and the best number, and I'll call you then.
+
+Meanwhile, the family message from my first email is ready to go whenever you are.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"r2",phase:"2 · Replies",name:"R2 · Not interested",to:"lost",subject:"Re: Your {{school}} family message is ready",body:
+`Hi {{greeting}},
+
+Understood, and thanks for the quick answer. I won't follow up again.
+
+If things change, or a parent asks you about online safety down the road, just reply here and I'll pick it right back up.
+
+Best,
+{{sender}}
+CyberSafely.ai`},
+ {id:"r3",phase:"2 · Replies",name:"R3 · Exception: we send it for you",to:"engaged",path:"we",subject:"Re: Your {{school}} family message is ready",body:
+`Hi {{greeting}},
+
+Done. We'll handle delivery. Here's all I need from your office:
+
+1. Parent or PTA email addresses for your 5th–9th grade families. A spreadsheet with one column of emails is plenty.
+2. Your OK on the family message from my first email. It goes out as a message from {{school}}.
+3. A send date, if you have one in mind. If not, we'll send it within [X] school days.
+
+[Line on how the contacts are used and stored. Get the approved wording from Torino before sending.]
+
+Once it's out, I'll let you know it landed.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"g1",phase:"3 · Sign-up support",name:"G1 · No sign-ups yet (nudge)",to:null,subject:"{{school}}: a 50-word version for parents",body:
+`Hi {{greeting}},
+
+Thanks again for sharing CyberSafely.ai with your families. Sign-ups from {{school}} haven't come through yet. Inboxes being what they are, the first message may have been buried.
+
+Here's a 50-word version that fits a newsletter, morning announcement or text to parents:
+
+{{newsletter}}
+
+Or reply with your PTA or parent contact and we'll send it ourselves.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"g2",phase:"3 · Sign-up support",name:"G2 · First sign-ups: thank-you + reminder",to:null,subject:"{{signups}} {{school}} families are in",body:
+`Hi {{greeting}},
+
+Good news: {{signups}} {{school}} families have signed up for CyberSafely.ai. Thank you for making that happen.
+
+A second reminder can catch the families who missed the first one. Here's a short version for your newsletter, announcements or a text to parents:
+
+{{newsletter}}
+
+Parents who want a hand getting set up can join a free live onboarding call: {{onboarding_page}}
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"g3",phase:"3 · Sign-up support",name:"G3 · Monthly update",to:null,subject:"{{school}}: {{signups}} families and counting",body:
+`Hi {{greeting}},
+
+Your monthly update: {{signups}} {{school}} families have signed up so far.
+
+Got a newsletter, parent night or conference coming up? This blurb is ready to drop in:
+
+{{newsletter}}
+
+And if parents have asked you anything about it, send it my way. I'd rather answer a question than let it stall a sign-up.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"p1",phase:"Family-facing (inserted above)",name:"P1 · Family message (forwarded by the school)",to:null,subject:"Free for {{school}} families: a year of CyberSafely.ai",body:
+`Dear {{school}} families,
+
+We want every 5th–9th grade family at {{school}} to know about a free resource now available to you.
+
+CyberSafely.ai is a parent app that alerts you early if something concerning comes up in your child's online life, like bullying, grooming, sextortion or exposure to harmful content, so you can step in before it escalates.
+
+It's built to support your judgment, not replace it. It doesn't read your child's private messages or store their passwords. It watches for warning signs and lets you know.
+
+Thanks to a collaboration between CyberSafely.ai and MSBA, Missouri families of 5th–9th graders get one full year free.
+
+Getting started takes a few minutes:
+1. Sign up here: {{signup_link}}
+2. Add your child.
+
+That's it.
+
+Want a hand? Step-by-step instructions, a short video and free live onboarding calls are here: {{onboarding_page}}
+
+Questions? Reach the CyberSafely.ai team at {{support}}.`},
+ {id:"n1",phase:"Family-facing (inserted above)",name:"N1 · Newsletter blurb (~50 words)",to:null,subject:"",body:
+`Free for {{school}} families: a year of CyberSafely.ai, through a collaboration with MSBA. The parent app alerts you early if your 5th–9th grader may be facing bullying, grooming or other serious trouble online, so you can step in before it escalates. Sign up in a few minutes: {{signup_link}}`},
+ {id:"n2",phase:"Family-facing (inserted above)",name:"N2 · Text / announcement (short)",to:null,subject:"",body:
+`{{school}} families: your 5th–9th grader qualifies for a free year of CyberSafely.ai, a parent app that flags online trouble early. Sign up in minutes: {{signup_link}}`},
+ {id:"vm",phase:"Calls",name:"Voicemail script (~20 s)",to:null,subject:"",body:
+`Hi {{greeting}}, this is {{sender}} with CyberSafely.ai, following up on Mike Nutter's note about the free year for your 5th through 9th grade families. The family message is written and ready. All it needs is a forward, and if your office is busy, we'll send it ourselves. I'm sending you a short email now. You can reach me at {{phone}}. Thanks!`},
+ {id:"c1",phase:"Calls",name:"C1 · Call script: principal opened the email",to:null,subject:"",body:
+`OPENING
+"Hi {{greeting}}, this is {{sender}} with CyberSafely.ai. Did I catch you at an okay moment?
+
+I'm following up on Mike Nutter's message about the free year of CyberSafely.ai for Missouri's 5th through 9th graders. I sent you the details by email and wanted to make sure it's on your radar."
+
+THE GOOD NEWS
+"We've already done the work. The message for your families is written, with {{school}}'s sign-up link built in. It just needs to reach your parents."
+
+THE CLOSE (assume the yes; don't ask them to choose)
+"The quickest route is a forward in your next parent email or newsletter. If your office is stretched, give me your PTA or parent contact and we'll send it ourselves. Either way, your families get it."
+
+IF YES → mark "Interested / Ready to move forward"
+"Perfect. I'll email you everything today." → send F1. If they named a PTA or parent contact, log it in HubSpot, not in the vault.
+
+IF THEY HAVE QUESTIONS → mark "Needs more information"
+"Good question." Answer only what you know. "If I don't have it, I'll find out and put it in a short summary today." → send F2.
+
+IF NOT READY → mark "Follow-up needed"
+"Totally fair. I'll send a one-page summary so it's there when you are, and check back in [two weeks]." → send F2, set the call-back.
+
+IF NO → mark "Not interested"
+"Understood. Thanks for your time. I'll close it out on our end." → send R2.
+
+QUICK ANSWERS
+- "Do we sign anything?" → "Nothing. No contract, no MOU, no cost."
+- "What does the school have to do?" → "One forward. Or hand us a contact and we'll do it."
+- "What about student data?" → "Fair question. I want to give you an accurate answer, so I'll follow up in writing." Don't improvise.
+
+WRAP-UP
+Ask if they'd like information on the fundraising program. If yes, tick "Wants fundraising info".
+
+NO ANSWER → mark "Unable to reach". Leave the voicemail, then send F3.`},
+ {id:"f1",phase:"4 · After the call",name:"F1 · Interested: next steps",to:"engaged",subject:"{{school}}: everything for your families, ready to go",body:
+`Hi {{greeting}},
+
+Great talking with you. As promised, here's everything your 5th–9th grade families need.
+
+The message below is ready to forward, with {{school}}'s sign-up link built in. Send it in your next parent email or newsletter and you're done.
+
+[If they gave you a PTA or parent contact on the call, replace the paragraph above with: "We'll take it from here. We'll get the family list from [contact] and send the message below on {{school}}'s behalf." Then add the data-handling line once Torino approves it. Delete this note.]
+
+Thank you,
+{{sender}}
+CyberSafely.ai
+{{phone}}
+
+———— Message for {{school}} families (ready to forward) ————
+
+{{parent_email}}`},
+ {id:"f2",phase:"4 · After the call",name:"F2 · Needs info / not ready: short summary",to:null,subject:"{{school}}'s free year, on one page",body:
+`Hi {{greeting}},
+
+Thanks for your time today. Here's the one-page version to keep on hand.
+
+- What it is: a parent app that alerts parents early if their child may be facing something serious online, like bullying, grooming or sextortion.
+- The offer: through CyberSafely.ai's collaboration with MSBA, every 5th–9th grade family in Missouri gets one year free.
+- What it takes from {{school}}: no contract, no MOU, no cost. One forward to families, or we send it for you.
+- Your sign-up link: {{signup_link}}
+
+[Answers to the questions they asked on the call. Delete if none.]
+
+When you're ready, reply here or call me at {{phone}}. I'll check back in [two weeks] either way.
+
+{{sender}}
+CyberSafely.ai`},
+ {id:"f3",phase:"4 · After the call",name:"F3 · Unable to reach: after voicemail",to:"contacted",seq:2,subject:"Missed you by phone: {{school}}'s free year",body:
+`Hi {{greeting}},
+
+I just left you a voicemail, so here's the written version, easier to skim between meetings.
+
+Following up on Mike Nutter's message: {{school}}'s 5th–9th grade families have a free year of CyberSafely.ai, thanks to our collaboration with MSBA. The family message is written and ready (below), with your sign-up link built in.
+
+All it needs is a forward to your parents. If your office is stretched, reply with your PTA or parent contact and we'll send it ourselves.
+
+Questions? Reply here or call me at {{phone}}.
+
+{{sender}}
+CyberSafely.ai
+{{phone}}
+
+———— Message for {{school}} families (ready to forward) ————
+
+{{parent_email}}`}
+];
+
+/* ---------- state ---------- */
+let S = load();
+let view = "today", openId = null, filt = {q:"",stage:"",district:"",due:"",email:"",level:"",grades:"",region:""};
+let showAll = false;
+// Dataset switch: principals (one per school) or district overseers. Both live in S.leads; overseers have type "overseer".
+// Campaigns: people who interacted with a newsletter (from HubSpot). type "campaign", plus l.campaign = "List A, List B".
+// PTA: PTA/PTO contacts (name + email). type "pta"; an organization name goes in l.school.
+// Users: people already using the app, emailed to keep them retained (name + email). type "user"; same import rules as PTA.
+let ds = "principal"; try{ const v=localStorage.getItem(KEY+"-ds"); if(v==="overseer"||v==="campaign"||v==="pta"||v==="user")ds=v; }catch(e){}
+const isOv=l=>l.type==="overseer", isCamp=l=>l.type==="campaign", isPta=l=>l.type==="pta", isUser=l=>l.type==="user", isPr=l=>!l.type||l.type==="principal";
+const inDs=l=>(l.type||"principal")===ds;
+function campsOf(l){return String(l.campaign||"").split(",").map(s=>s.trim()).filter(Boolean);}
+const FREE_MAIL=/^(gmail|yahoo|hotmail|outlook|aol|icloud|live|msn|comcast|att|sbcglobal|charter|me|protonmail)\./;
+function domainOf(l){const d=String(l.email||"").toLowerCase().split("@")[1]||"";return d&&!FREE_MAIL.test(d)?d:"";}
+function DL(){return S.leads.filter(inDs);}
+function W(){return ds==="user"?{one:"user",many:"users",Unit:"Organization",Who:"User"}:ds==="pta"?{one:"PTA contact",many:"PTA contacts",Unit:"PTA / organization",Who:"Contact"}:ds==="campaign"?{one:"contact",many:"contacts",Unit:"Organization",Who:"Contact"}:ds==="overseer"?{one:"overseer",many:"overseers",Unit:"District",Who:"Overseer"}:{one:"school",many:"schools",Unit:"School",Who:"Principal"};}
+// District matching: District ID first, then a normalized name ("St. Louis City" = "Saint Louis Public Schools")
+function normD(s){return String(s||"").toLowerCase().replace(/\bsaint\b/g,"st").replace(/\b(school|schools|district|public|city|the)\b/g,"").replace(/[^a-z0-9]/g,"");}
+function sameD(a,b){if(a.districtId&&b.districtId)return String(a.districtId)===String(b.districtId);const x=normD(a.district);return !!x&&x===normD(b.district);}
+function schoolsOf(o){return S.leads.filter(l=>isPr(l)&&sameD(l,o)).sort((a,b)=>schoolOf(a).localeCompare(schoolOf(b)));}
+function overseerOf(l){return S.leads.find(o=>isOv(o)&&sameD(o,l));}
+function setDs(v){ds=v;try{localStorage.setItem(KEY+"-ds",v);}catch(e){} filt={q:"",stage:"",district:"",due:"",email:"",level:"",grades:"",region:""}; callFilt=""; closeDrawer();}
+
+function blank(){return {leads:[],templates:DEFAULT_TEMPLATES.map(t=>({...t})),tplVersion:TPL_VERSION,
+  settings:{sender:"Giancarlo Zaccardelli",caller:"Giancarlo",phone:"",onboardingPage:"",defaultLink:"",support:"",activeTarget:10,
+    report:{focus:"",wins:"",blockers:"",next:"",log:[]}},savedAt:null};}
+function load(){
+  let d=null;
+  try{const raw=localStorage.getItem(KEY); if(raw)d=JSON.parse(raw);}catch(e){}
+  if(!d){d=blank();syncVault(d);return d;}
+  const ver=d.tplVersion||1;
+  d={...blank(),...d,settings:{...blank().settings,...(d.settings||{})}};
+  if(ver<3){
+    // replace the earlier default emails, keep any you wrote yourself
+    const old=["t1","t2","t3","t4","t5","vm","e1","e2","f1","fv","f2","f3","r1","r2","a1","a2","b1","b2","p1","n1","n2","l1","l2"];
+    const own=(d.templates||[]).filter(t=>!old.includes(t.id)&&!DEFAULT_TEMPLATES.some(x=>x.id===t.id));
+    d.templates=[...DEFAULT_TEMPLATES.map(t=>({...t})),...own]; d.tplVersion=TPL_VERSION;
+    // map the earlier 11-stage pipeline onto the 5 stages
+    const map={e1:"contacted",e2:"contacted",call:"contacted",decided:"engaged",setup:"engaged",launched:"engaged",activating:"live"};
+    const seq={e1:1,e2:1,call:2};
+    d.leads.forEach(l=>{ if(seq[l.stage])l.seq=Math.max(l.seq||0,seq[l.stage]); if(l.stage==="launched")l.shared=true;
+      if(l.path==="you")l.path=""; if(map[l.stage])l.stage=map[l.stage]; l.sent=l.sent||[]; });
+  }
+  if(ver<4){
+    // v4 adds the call script and after-call emails; your edits to existing emails are kept
+    DEFAULT_TEMPLATES.forEach(t=>{if(!d.templates.some(x=>x.id===t.id))d.templates.push({...t});});
+    d.tplVersion=TPL_VERSION;
+  }
+  if(ver<5){
+    // v5: refined copy from the vault's Emails/ notes (Oct 8, 2026). Replaces a template only if you
+    // haven't edited it in the app; edited ones are kept and listed in the console.
+    const V4={"e1":"6x9rux","e2":"1tr8qh4","e3":"1c0qke2","r1":"jc4o7r","r2":"4l2vml","r3":"11algzg","g1":"1ggp0y0","g2":"15si425","g3":"nsity5","p1":"1jq0ptf","n1":"134dqes","n2":"16ww5wj","vm":"785fdy","c1":"10dbrwx","f1":"1ckczjg","f2":"cr3hok","f3":"1ake5km"};
+    const hash=s=>{let x=5381;for(const c of s)x=((x*33)^c.codePointAt(0))>>>0;return x.toString(36);};
+    const kept=[];
+    DEFAULT_TEMPLATES.forEach(t=>{const i=d.templates.findIndex(x=>x.id===t.id);
+      if(i<0)d.templates.push({...t});
+      else if(hash(d.templates[i].subject+"\n"+d.templates[i].body)===V4[t.id])d.templates[i]={...t};
+      else kept.push(t.id);});
+    if(kept.length)console.warn("Kept your edited templates (not refreshed):",kept.join(", "));
+    d.tplVersion=TPL_VERSION;
+  }
+  if(ver<6){
+    // v6 adds D1 for district overseers
+    DEFAULT_TEMPLATES.forEach(t=>{if(!d.templates.some(x=>x.id===t.id))d.templates.push({...t});});
+    d.tplVersion=TPL_VERSION;
+  }
+  syncVault(d);
+  return d;
+}
+// The vault's Emails/ folder is the source of truth: each subfolder is a category. When email-templates.js changes,
+// templates are replaced with the vault's (added, removed, re-categorized). Emails made in the app with "+ New email" are kept.
+function vaultTemplates(){const v=window.VAULT_TEMPLATES;return v&&Array.isArray(v.templates)&&v.templates.length?v:null;}
+function syncVault(d,force){
+  const v=vaultTemplates(); if(!v||(!force&&d.vaultVersion===v.version))return false;
+  const vids=new Set(v.templates.map(t=>t.id));
+  const known=new Set([...DEFAULT_TEMPLATES.map(t=>t.id),...(d.vaultIds||[]),"t1","t2","t3","t4","t5","vm","e1","e2","f1","fv","f2","f3","r1","r2","a1","a2","b1","b2","p1","n1","n2","l1","l2"]);
+  const own=(d.templates||[]).filter(t=>!vids.has(t.id)&&!known.has(t.id)).map(t=>({...t,phase:"Other (made in the app)"}));
+  d.templates=[...v.templates.map(t=>({...t})),...own]; d.vaultIds=[...vids]; d.vaultVersion=v.version;
+  return true;
+}
+// <select> options grouped by category, in vault folder order
+function tplOptions(sel,star,filter){
+  const ts=S.templates.filter(filter||(()=>true)), cats=[...new Set(ts.map(t=>t.phase||"Other"))];
+  return cats.map(c=>`<optgroup label="${esc(c)}">${ts.filter(t=>(t.phase||"Other")===c).map(t=>`<option value="${t.id}" ${t.id===sel?"selected":""}>${t.id===star?"★ ":""}${esc(t.name)}</option>`).join("")}</optgroup>`).join("");
+}
+function save(){
+  S.savedAt=new Date().toISOString();
+  try{localStorage.setItem(KEY,JSON.stringify(S)); document.getElementById("savedAt").textContent="Saved "+new Date().toLocaleTimeString();}
+  catch(e){document.getElementById("savedAt").textContent="⚠️ Not saved: browser storage unavailable. Use Data → Back up.";}
+}
+
+/* ---------- helpers ---------- */
+const $=s=>document.querySelector(s);
+function esc(v){return String(v??"").replace(/[&<>"']/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));}
+function uid(){return Math.random().toString(36).slice(2,10)+Date.now().toString(36).slice(-4);}
+function todayISO(){return iso(new Date());}
+function iso(d){return d.getFullYear()+"-"+String(d.getMonth()+1).padStart(2,"0")+"-"+String(d.getDate()).padStart(2,"0");}
+let BASE=null; // "YYYY-MM-DD" while applying a dated activity log
+function nowTs(){return BASE?new Date(BASE+"T12:00").toISOString():new Date().toISOString();}
+function addBiz(n){const d=BASE?new Date(BASE+"T12:00"):new Date();let k=0;while(k<n){d.setDate(d.getDate()+1);const w=d.getDay();if(w&&w<6)k++;}return iso(d);}
+function bizSince(ts){if(!ts)return null;const a=new Date(ts.slice(0,10)+"T12:00"),b=new Date(todayISO()+"T12:00");let n=0;while(a<b){a.setDate(a.getDate()+1);const w=a.getDay();if(w&&w<6)n++;}return n;}
+function fmtDate(s){if(!s)return"";const d=new Date(s+"T12:00");return d.toLocaleDateString(undefined,{month:"short",day:"numeric"});}
+function dueClass(s){if(!s)return"";const t=todayISO();return s<t?"over":s===t?"today":"";}
+function name(l){return [l.first,l.last].filter(Boolean).join(" ")||l.email||"(no name)";}
+function schoolOf(l){return l.school||l.district||(isUser(l)?"":isCamp(l)||isPta(l)?"(organization not set)":"(school not set)");}
+function lastTouch(l){const a=(l.activity||[]).filter(x=>x.type!=="Stage"&&x.type!=="Note");return a.length?a[a.length-1].ts.slice(0,10):"";}
+function touches(l){return (l.activity||[]).filter(x=>x.type!=="Stage"&&x.type!=="Note").length;}
+function firstEmailTs(l){const a=(l.activity||[]).find(x=>x.type==="Email sent");return a?a.ts:null;}
+function lead(id){return S.leads.find(l=>l.id===id);}
+function tpl(id){return S.templates.find(t=>t.id===id);}
+function cv(s){return `var(${STAGE[s].c})`;}
+function digits(p){let d=String(p||"").replace(/\D/g,"");if(d.length===11&&d[0]==="1")d=d.slice(1);return d;}
+function fmtPhone(p){const d=digits(p);return d.length===10?`(${d.slice(0,3)}) ${d.slice(3,6)}-${d.slice(6)}`:String(p||"");}
+function telLink(l){return l.phone?`<a href="tel:+1${digits(l.phone)}">${esc(fmtPhone(l.phone))}</a>`:'<span class="chip">no phone</span>';}
+function outlookUrl(to,s,b,bcc){const q=[["to",to],["bcc",bcc],["subject",s],["body",b]].filter(([,v])=>v).map(([k,v])=>k+"="+encodeURIComponent(v)).join("&");return "https://outlook.cloud.microsoft/mail/deeplink/compose?"+q;}
+function mailLink(l){return l.email?`<a href="${esc(outlookUrl(l.email))}" target="_blank" rel="noopener">${esc(l.email)}</a>`:'<span class="chip">no email</span>';}
+function contact(l){return `<div class="small">${telLink(l)}</div><div class="small">${mailLink(l)}</div>`;}
+function callChip(l){const c=l.call&&CALLS[l.call.status];return c?`<span class="chip" style="color:var(${c.c})">● ${esc(c.short)}</span>`:"";}
+
+/* ---------- pipeline visuals ---------- */
+// Four bars = Contacted, Engaged, Live, Active. A half bar = partway (later touches, or "shared").
+function stepper(l){
+  const i=MAIN.indexOf(l.stage), closed=i<0, c=closed?"var(--muted)":cv(l.stage);
+  const bars=MAIN.slice(1).map((s,k0)=>{const k=k0+1;let cls="";
+    if(!closed&&k<=i)cls="on";
+    else if(!closed&&k===i+1&&((l.stage==="contacted"&&(l.seq||0)>=2)||(l.stage==="engaged"&&l.shared)))cls="half";
+    return `<i class="${cls}"></i>`;}).join("");
+  let sub=STAGE[l.stage].name;
+  if(l.stage==="contacted")sub+=` · touch ${l.seq||1} of 3`;
+  if(l.stage==="engaged")sub+=l.path==="we"?" · we send it":l.shared?" · shared":"";
+  if(["live","active"].includes(l.stage))sub+=` · ${l.families?.signups||0} sign-ups`;
+  const d=bizSince(firstEmailTs(l)); if(d!==null&&["contacted","engaged"].includes(l.stage))sub+=` · day ${d}`;
+  if(l.call&&CALLS[l.call.status])sub+=` · call: ${CALLS[l.call.status].short}`;
+  return `<div class="steps" style="--c:${c}" title="${esc(STAGE[l.stage].desc)}">${bars}</div><div class="stlabel"><span class="dot" style="--c:${c}"></span>${esc(sub)}</div>`;
+}
+function strip(){
+  const L=DL(), n=L.length;
+  const reach=id=>L.filter(l=>MAIN.indexOf(l.stage)>=MAIN.indexOf(id)).length;
+  const cells=MAIN.map((s,k)=>{const cnt=L.filter(l=>l.stage===s).length;
+    const prev=k>0?reach(MAIN[k-1]):0;
+    const conv=k===0?`${n} ${W().many} total`:prev?`${Math.round(reach(s)/prev*100)}% made it past ${STAGE[MAIN[k-1]].name}`:"";
+    return `<button data-fst="${s}" class="${filt.stage===s?"on":""}" style="--c:${cv(s)}"><div class="l">${STAGE[s].name}</div><div class="v">${cnt}</div><div class="r">${esc(conv)}</div></button>`;}).join("");
+  const nur=L.filter(l=>l.stage==="nurture").length, lost=L.filter(l=>l.stage==="lost").length;
+  const rej=L.filter(l=>l.stage==="rejected").length;
+  return `<div class="strip">${cells}<button data-fst="rejected" class="${filt.stage==="rejected"?"on":""}" style="--c:var(--bad)"><div class="l">Rejected</div><div class="v">${rej}</div><div class="r">emails that bounced</div></button><button class="closed ${["nurture","lost"].includes(filt.stage)?"on":""}" data-fst="${filt.stage==="nurture"?"lost":"nurture"}" style="--c:var(--sx)"><div class="l">Closed</div><div class="v">${nur+lost}</div><div class="r">${nur} nurture · ${lost} declined</div></button></div>`;
+}
+function bindStrip(m){m.querySelectorAll("[data-fst]").forEach(b=>b.onclick=()=>{const s=b.dataset.fst;filt.stage=filt.stage===s?"":s;view="leads";render();});}
+
+/* ---------- merge fields ---------- */
+function tokens(l){
+  const sal=l.title_salutation;
+  const t={
+    greeting: sal?`${sal} ${l.last||l.first||""}`.trim():(l.first||"there"),
+    first:l.first||"", last:l.last||"", school:l.school||l.district||"your school", district:l.district||"",
+    sender:S.settings.sender, phone:S.settings.phone||"[your phone]",
+    signup_link:l.regLink||S.settings.defaultLink||"[school's sign-up link]",
+    onboarding_page:S.settings.onboardingPage||"[parent onboarding page link]",
+    support:S.settings.support||"[support email or phone]",
+    signups:(l.families?.signups!==undefined&&l.families.signups!=="")?l.families.signups:"[number]"
+  };
+  const sub=id=>{const x=tpl(id);return x?x.body.replace(/\{\{(\w+)\}\}/g,(_,k)=>t[k]??""):"";};
+  t.newsletter=sub("n1"); t.parent_email=sub("p1");
+  return t;
+}
+function fill(text,l){const t=tokens(l);return String(text||"").replace(/\{\{(\w+)\}\}/g,(_,k)=>t[k]??"{{"+k+"}}");}
+function render1(id,l){const x=tpl(id);return x?{s:fill(x.subject,l),b:fill(x.body,l)}:{s:"",b:""};}
+function placeholders(text){return (text.match(/\[[^\]\n]{2,80}\]/g)||[]);}
+function toHubspot(text){
+  const H={greeting:"{{ contact.firstname }}",first:"{{ contact.firstname }}",last:"{{ contact.lastname }}",school:"{{ contact.company }}",
+    district:"{{ contact.company }}",sender:S.settings.sender,phone:S.settings.phone||"[your phone]",
+    signup_link:S.settings.defaultLink||"[school's sign-up link]",onboarding_page:S.settings.onboardingPage||"[parent onboarding page link]",
+    support:S.settings.support||"[support email or phone]",signups:"[number]"};
+  const sub=id=>(tpl(id)?.body||"").replace(/\{\{(\w+)\}\}/g,(_,k)=>H[k]??"");
+  H.newsletter=sub("n1"); H.parent_email=sub("p1");
+  return String(text||"").replace(/\{\{(\w+)\}\}/g,(_,k)=>H[k]??"");
+}
+
+/* ---------- stage logic ---------- */
+function setStage(l,st,note){
+  if(l.stage===st)return;
+  const from=l.stage; l.stage=st;
+  log(l,"Stage",`${STAGE[from]?.name||from} → ${STAGE[st].name}${note?": "+note:""}`);
+  setNext(l);
+}
+function setNext(l){const nx=nextFor(l); if(nx){l.nextAction=nx[0]; l.nextDue=nx[1]==null?"":addBiz(nx[1]);} else {l.nextAction="";l.nextDue="";}}
+function log(l,type,note){(l.activity=l.activity||[]).push({ts:nowTs(),type,note:note||""}); l.updatedAt=new Date().toISOString();}
+function fwd(l,st){return MAIN.indexOf(st)>MAIN.indexOf(l.stage)||l.stage==="nurture";}
+function logSent(l,tid){
+  const t=tpl(tid); log(l,"Email sent",t?t.name:"");
+  l.sent=[...new Set([...(l.sent||[]),tid])];
+  if(t?.seq)l.seq=Math.max(l.seq||0,t.seq);
+  if(t?.path)l.path=t.path;
+  if(t?.to==="lost")return setStage(l,"lost",t.name);
+  if(t?.to&&fwd(l,t.to))return setStage(l,t.to,t.name);
+  setNext(l);
+}
+function autoAdvance(l,a){
+  if(["Call: reached","Reply received","Meeting / demo"].includes(a)){ if(fwd(l,"engaged"))setStage(l,"engaged"); else setNext(l); return; }
+  if(a==="Says they shared it"){ l.shared=true; if(fwd(l,"engaged"))setStage(l,"engaged"); else setNext(l); return; }
+  if((a==="Voicemail"||a==="Front office message")&&l.stage==="contacted"){ l.nextAction="Send E2 (after call attempt)"; l.nextDue=todayISO(); }
+}
+function setSignups(l,v){
+  l.families=l.families||{}; l.families.signups=v; l.families.asOf=todayISO();
+  const n=+v||0, tgt=+S.settings.activeTarget||10;
+  if(n>=tgt&&l.stage!=="active")setStage(l,"active",`${n} sign-ups`);
+  else if(n>0&&n<tgt&&MAIN.indexOf(l.stage)<MAIN.indexOf("live"))setStage(l,"live",`${n} sign-ups`);
+}
+// Record a call outcome: moves the stage and queues the matching follow-up email
+function setCall(l,st,note){
+  if(!st){
+    // Clear: drop the outcome and put the stage back to where it was before the first outcome
+    if(l.call){const p=l.call.prev; delete l.call.status; delete l.call.ts; delete l.call.by; delete l.call.prev;
+      if(p){l.stage=p.stage; l.seq=p.seq||0;}
+      log(l,"Note","Call outcome cleared"); setNext(l);}
+    return;}
+  const c=CALLS[st]; if(!c)return;
+  const prev=l.call?.prev||{stage:l.stage,seq:l.seq||0};
+  l.call={...(l.call||{}),status:st,ts:nowTs(),by:S.settings.caller||"",prev};
+  log(l,"Call",c.name+(st==="unreach"?" (voicemail)":"")+(note?": "+note:""));
+  if(c.stage==="lost")setStage(l,"lost",c.name);
+  else if(c.stage==="engaged"&&fwd(l,"engaged"))setStage(l,"engaged",c.name);
+  else if(c.stage==="contacted"&&["new","lost","nurture"].includes(l.stage))setStage(l,"contacted",c.name);
+  if(c.stage==="contacted")l.seq=Math.max(l.seq||0,2);
+  setNext(l);
+}
+// Start over: put the pipeline back to a fresh Cold lead. Contact details and notes stay.
+function resetLead(l){
+  l.stage="new"; l.seq=0; l.sent=[]; l.activity=[]; l.families={}; l.path=""; l.shared=false;
+  delete l.call;
+  setNext(l); l.updatedAt=new Date().toISOString();
+}
+// Outreach finished with no reply → Nurture
+function tick(){
+  const t=todayISO(); let ch=false;
+  S.leads.forEach(l=>{if(l.stage==="contacted"&&(l.seq||0)>=3&&l.nextDue&&l.nextDue<t){setStage(l,"nurture","no reply after 3 touches");ch=true;}});
+  if(ch)save();
+}
+
+/* ---------- nav ---------- */
+const VIEWS=[["today","Today"],["calls","Calls"],["leads","Schools"],["board","Board"],["map","Map"],["templates","Emails"],["dash","Dashboard"],["stats","Analytics"],["data","Data"],["help","Process"]];
+function renderNav(){
+  const t=todayISO(); const due=DL().filter(l=>l.nextDue&&l.nextDue<=t&&l.stage!=="lost").length;
+  document.querySelectorAll("#dsSwitch button").forEach(b=>b.classList.toggle("on",b.dataset.ds===ds));
+  $("#nav").innerHTML=VIEWS.map(([k,v])=>`<button class="${view===k?"on":""}" data-v="${k}">${v}${k==="today"&&due?`<span class="n">${due}</span>`:""}</button>`).join("");
+}
+$("#dsSwitch").addEventListener("click",e=>{const b=e.target.closest("button");if(b&&b.dataset.ds!==ds)setDs(b.dataset.ds);});
+$("#nav").addEventListener("click",e=>{const b=e.target.closest("button");if(b){view=b.dataset.v;render();}});
+function render(){
+  renderNav();
+  const m=$("#main");
+  if(!DL().length && !["data","templates","help"].includes(view) && !(view==="stats"&&S.leads.length)){
+    m.innerHTML=ds==="user"?`<div class="card"><h2 style="margin-top:0">No users yet</h2>
+    <p>Import your app users in <b>Data</b> while <b>Users</b> is selected at the top. Columns: <code>Name</code> and <code>Email</code>. Clean the export first with <code>.claude/scripts/clean-users.py</code>.</p>
+    <div class="row"><button class="b p" onclick="view='data';render()">Import users</button><button class="b" onclick="newLead()">Add a user</button></div></div>`:ds==="pta"?`<div class="card"><h2 style="margin-top:0">No PTA contacts yet</h2>
+    <p>Import your PTA list in <b>Data</b> while <b>PTA</b> is selected at the top. Columns: <code>Name</code> and <code>Email</code>. A title line above the header (like "PTA DATASET") is skipped.</p>
+    <div class="row"><button class="b p" onclick="view='data';render()">Import PTA contacts</button><button class="b" onclick="newLead()">Add a PTA contact</button></div></div>`:ds==="campaign"?`<div class="card"><h2 style="margin-top:0">No campaign contacts yet</h2>
+    <p>Export the people who opened or clicked a newsletter from HubSpot as CSV, then import them in <b>Data</b> with a campaign name (e.g. "Sept 2026 newsletter"). Name and email are enough.</p>
+    <div class="row"><button class="b p" onclick="view='data';render()">Import a newsletter list</button><button class="b" onclick="newLead()">Add a contact</button></div></div>`:ds==="overseer"?`<div class="card"><h2 style="margin-top:0">No overseers yet</h2>
+    <p>Import your district overseers CSV in <b>Data</b> while <b>Overseers</b> is selected at the top. Columns: District ID, District, First Name, Last Name, Email, Phone Number, Job Title.</p>
+    <div class="row"><button class="b p" onclick="view='data';render()">Import overseers</button><button class="b" onclick="newLead()">Add an overseer</button></div></div>`:`<div class="card"><h2 style="margin-top:0">No schools yet</h2>
+    <p>Export your Missouri principals from HubSpot as CSV, then import them in <b>Data</b>. You can also add one by hand.</p>
+    <div class="row"><button class="b p" onclick="view='data';render()">Import from HubSpot</button><button class="b" onclick="newLead()">Add a school</button></div></div>`;
+    return;
+  }
+  ({today:vToday,calls:vCalls,leads:vLeads,board:vBoard,map:vMap,templates:vTemplates,dash:vDash,stats:vStats,data:vData,help:vHelp})[view](m);
+}
+
+/* ---------- Today ---------- */
+function vToday(m){
+  const t=todayISO(), wk=addBiz(5);
+  const act=DL().filter(l=>l.nextDue&&l.stage!=="lost");
+  const over=act.filter(l=>l.nextDue<t).sort((a,b)=>a.nextDue.localeCompare(b.nextDue));
+  const tod=act.filter(l=>l.nextDue===t);
+  const soon=act.filter(l=>l.nextDue>t&&l.nextDue<=wk).sort((a,b)=>a.nextDue.localeCompare(b.nextDue));
+  const byTpl={}; [...over,...tod].forEach(l=>{const s=suggestTpl(l);if(s)(byTpl[s]=byTpl[s]||[]).push(l);});
+  const batches=Object.entries(byTpl).map(([id,ls])=>{const ne=ls.filter(l=>!l.email).length;
+    return `<div class="row" style="padding:4px 0"><span class="chip">${ls.length}</span><span class="grow">${esc(tpl(id)?.name||id)}${ne?` <span class="small over">(${ne} missing email)</span>`:""}</span><button class="b sm p" data-batch="${id}">Send as batch</button></div>`;}).join("");
+  const sec=(title,arr,empty)=>`<h2>${title} <span class="muted">(${arr.length})</span></h2>`+(arr.length?table(arr,true):`<p class="muted">${empty}</p>`);
+  m.innerHTML=strip()+`<div class="banner">Missouri is on <b>Central time</b> (1 h behind ET). Calls: 7:30–8:15 AM or 2:45–3:45 PM CT. Emails: mornings, Tue–Thu.</div>
+  ${batches?`<div class="card"><h2 style="margin-top:0">Emails due now</h2>${batches}</div>`:""}
+  ${sec("Overdue",over,"Nothing overdue.")}
+  ${sec("Due today",tod,"Nothing due today.")}
+  ${sec("Next 5 workdays",soon,"Nothing scheduled.")}`;
+  bindStrip(m);
+  m.querySelectorAll("[data-batch]").forEach(b=>b.onclick=()=>bulkOpen(byTpl[b.dataset.batch],b.dataset.batch));
+}
+function table(arr,compact){
+  const w=W();
+  return `<div class="tablewrap"><table><thead><tr><th>${w.Unit}</th><th>${w.Who}</th><th style="min-width:150px">Where they are</th><th>Next step</th><th>Due</th>${compact?"":"<th>Touches</th><th>Last touch</th><th>Owner</th>"}</tr></thead><tbody>`+
+  arr.map(l=>`<tr class="click" data-id="${l.id}"><td><b>${esc(schoolOf(l))}</b>${l.school&&l.district&&l.school!==l.district?`<div class="small muted">${esc(l.district)}</div>`:""}${l.level||l.grades||l.city?`<div class="small muted">${esc([l.level,l.grades&&"Gr "+l.grades,l.city].filter(Boolean).join(" · "))}</div>`:""}${isOv(l)?`<div><span class="chip">${schoolsOf(l).length} schools</span></div>`:""}${isCamp(l)?`<div class="small muted">${esc(l.state||"")}</div><div>${campsOf(l).map(c=>`<span class="chip">${esc(c)}</span>`).join(" ")}</div>`:""}</td><td>${esc(name(l))}${contact(l)}</td><td>${stepper(l)}</td><td>${esc(l.nextAction)}</td><td class="${dueClass(l.nextDue)}">${fmtDate(l.nextDue)}</td>${compact?"":`<td>${touches(l)}</td><td>${fmtDate(lastTouch(l))}</td><td>${esc(l.owner)}</td>`}</tr>`).join("")+
+  `</tbody></table></div>`;
+}
+$("#main").addEventListener("click",e=>{if(e.target.closest("a,input,select,label,button"))return;const r=e.target.closest("tr.click,.tile");if(r&&r.dataset.id)openLead(r.dataset.id);});
+
+/* ---------- Calls ---------- */
+// Call list for principals who opened the emails. One row per principal: tap to call, pick the outcome.
+let callFilt="";
+function vCalls(m){
+  const L=DL().sort((a,b)=>(a.district||"").localeCompare(b.district||"")||schoolOf(a).localeCompare(schoolOf(b)));
+  const st=l=>(l.call&&CALLS[l.call.status])?l.call.status:"none";
+  const arr=L.filter(l=>!callFilt||st(l)===callFilt);
+  const cnt=k=>L.filter(l=>st(l)===k).length;
+  const cell=(k,label,c)=>`<button data-cf="${k}" class="${callFilt===k?"on":""}" style="--c:var(${c})"><div class="l">${esc(label)}</div><div class="v">${cnt(k)}</div></button>`;
+  // Overseers get the superintendent script (C3); everyone else the principal script (C1)
+  const ov=ds==="overseer", sid=ov?"c3":"c1";
+  const sample={first:ov?"[Superintendent's name]":"[Principal's name]",district:ov?"[district]":""};
+  m.innerHTML=`<div class="strip calls">${cell("none","Not called yet","--s0")}${CALL_IDS.map(k=>cell(k,CALLS[k].name,CALLS[k].c)).join("")}</div>
+  <div class="banner">Missouri is on <b>Central time</b> (1 h behind ET and Puerto Rico). Best windows: 7:30–8:15 AM or 2:45–3:45 PM CT. Keep it short, and don't repeat the emails. Each outcome queues its follow-up email in <b>Today</b> for the next workday.</div>
+  <div class="row" style="margin-bottom:10px">
+   <span class="small muted">Calling as</span><select id="caller"><option ${S.settings.caller==="Giancarlo"?"selected":""}>Giancarlo</option><option ${S.settings.caller==="Torino"?"selected":""}>Torino</option></select>
+   <span class="grow"></span><span class="small muted">${arr.length} of ${L.length} ${W().Who.toLowerCase()}s${callFilt?` · <a href="#" id="cfx">show all</a>`:""}</span>
+  </div>
+  <details class="card" style="margin-bottom:8px"><summary><b>Call script</b> (${sid.toUpperCase()})</summary><pre class="tpl">${esc(fill(tpl(sid)?.body||"",sample))}</pre></details>
+  <details class="card" style="margin-bottom:12px"><summary><b>Voicemail</b> (~20 s)</summary><pre class="tpl">${esc(fill(tpl("vm")?.body||"",sample))}</pre></details>
+  <div class="tablewrap"><table><thead><tr><th>${W().Unit}</th><th>${W().Who} · phone · email</th><th style="min-width:210px">Call outcome</th><th style="min-width:180px">Call note</th><th>Fundraising</th><th>Next step</th><th></th></tr></thead><tbody>`+
+  arr.map(l=>{const c=l.call||{};
+    return `<tr data-id="${l.id}"><td><b>${esc(schoolOf(l))}</b>${l.school&&l.district?`<div class="small muted">${esc(l.district)}</div>`:""}</td>
+    <td>${esc(name(l))}<div style="font-size:15px;font-weight:600">${telLink(l)}</div><div class="small">${mailLink(l)}</div></td>
+    <td><select data-call="${l.id}" style="width:100%;${c.status?`border-left:4px solid var(${CALLS[c.status].c})`:""}"><option value="">— not called —</option>${CALL_IDS.map(k=>`<option value="${k}" ${c.status===k?"selected":""}>${esc(CALLS[k].name)}</option>`).join("")}</select>
+     ${c.ts&&c.status?`<div class="small muted">${new Date(c.ts).toLocaleString(undefined,{month:"short",day:"numeric",hour:"numeric",minute:"2-digit"})}${c.by?" · "+esc(c.by):""}</div>`:""}</td>
+    <td><input data-cnote="${l.id}" value="${esc(c.note)}" placeholder="No student/family details" style="width:100%"></td>
+    <td><label class="small"><input type="checkbox" data-fund="${l.id}" ${c.fundraising?"checked":""}> wants info</label></td>
+    <td class="small">${esc(l.nextAction)}${l.nextDue?`<div class="${dueClass(l.nextDue)}">${fmtDate(l.nextDue)}</div>`:""}</td>
+    <td><button class="b sm" data-open="${l.id}">Open ›</button></td></tr>`;}).join("")+
+  `</tbody></table></div>`;
+  m.querySelectorAll("[data-cf]").forEach(b=>b.onclick=()=>{callFilt=callFilt===b.dataset.cf?"":b.dataset.cf;vCalls(m);});
+  const x=$("#cfx"); if(x)x.onclick=e=>{e.preventDefault();callFilt="";vCalls(m);};
+  $("#caller").onchange=e=>{S.settings.caller=e.target.value;save();};
+  m.querySelectorAll("[data-call]").forEach(el=>el.onchange=()=>{const l=lead(el.dataset.call);setCall(l,el.value);save();render();});
+  m.querySelectorAll("[data-cnote]").forEach(el=>el.onchange=()=>{const l=lead(el.dataset.cnote),v=el.value.trim();
+    l.call={...(l.call||{}),note:v}; if(v)log(l,"Note","Call note: "+v); save(); renderNav();});
+  m.querySelectorAll("[data-fund]").forEach(el=>el.onchange=()=>{const l=lead(el.dataset.fund);
+    l.call={...(l.call||{}),fundraising:el.checked}; log(l,"Note",el.checked?"Wants fundraising program info":"Fundraising info: no"); save();});
+  m.querySelectorAll("[data-open]").forEach(b=>b.onclick=()=>openLead(b.dataset.open));
+}
+
+/* ---------- Schools ---------- */
+function filtered(){
+  const t=todayISO();
+  return DL().filter(l=>{
+    if(filt.stage&&l.stage!==filt.stage)return false;
+    if(filt.district&&(ds==="campaign"?!campsOf(l).includes(filt.district):l.district!==filt.district))return false;
+    if(filt.due==="over"&&!(l.nextDue&&l.nextDue<=t))return false;
+    if(filt.email==="yes"&&!l.email)return false;
+    if(filt.email==="no"&&l.email)return false;
+    if(filt.level&&l.level!==filt.level)return false;
+    if(filt.grades&&l.grades!==filt.grades)return false;
+    if(filt.region&&l.region!==filt.region)return false;
+    if(filt.q){const q=filt.q.toLowerCase();if(![name(l),l.school,l.district,l.email,l.phone,digits(l.phone),l.notes,l.city,l.code,l.assigned].join(" ").toLowerCase().includes(q))return false;}
+    return true;
+  }).sort((a,b)=>(RANK(b.stage)-RANK(a.stage))||(a.district||"").localeCompare(b.district||""));
+}
+function vLeads(m){
+  const uniq=k=>[...new Set(DL().map(l=>l[k]).filter(Boolean))].sort();
+  const arr=filtered();
+  m.innerHTML=strip()+`<div class="row" style="margin-bottom:12px">
+   <input id="fq" placeholder="Search ${ds==="campaign"||ds==="pta"||ds==="user"?"name, email, organization":ds==="overseer"?"overseer, district":"school, principal, district"}, notes" value="${esc(filt.q)}" class="grow" style="min-width:200px">
+   <select id="fs"><option value="">All stages</option>${STAGES.map(s=>`<option value="${s.id}" ${filt.stage===s.id?"selected":""}>${s.name}</option>`).join("")}</select>
+   <select id="fd"><option value="">${ds==="campaign"?"All campaigns":"All districts"}</option>${(ds==="campaign"?[...new Set(DL().flatMap(campsOf))].sort():uniq("district")).map(d=>`<option ${filt.district===d?"selected":""}>${esc(d)}</option>`).join("")}</select>
+   <select id="fu"><option value="">Any due date</option><option value="over" ${filt.due==="over"?"selected":""}>Due now</option></select>
+   <select id="fe"><option value="">Email: any</option><option value="yes" ${filt.email==="yes"?"selected":""}>Has email</option><option value="no" ${filt.email==="no"?"selected":""}>Missing email</option></select>
+   ${uniq("level").length?`<select id="fl"><option value="">Any level</option>${uniq("level").map(v=>`<option ${filt.level===v?"selected":""}>${esc(v)}</option>`).join("")}</select>`:""}
+   ${uniq("grades").length?`<select id="fg"><option value="">Any grades</option>${uniq("grades").map(v=>`<option ${filt.grades===v?"selected":""}>${esc(v)}</option>`).join("")}</select>`:""}
+   ${uniq("region").length?`<select id="fr"><option value="">Any region</option>${uniq("region").sort((a,b)=>a-b).map(v=>`<option value="${esc(v)}" ${filt.region===v?"selected":""}>Region ${esc(v)}</option>`).join("")}</select>`:""}
+   <button class="b" onclick="newLead()">+ Add ${W().one}</button>
+  </div>
+  <div class="row small muted" style="margin-bottom:8px">${arr.length} of ${DL().length} ${W().many}${arr.length>25?` · showing ${showAll?arr.length:Math.min(25,arr.length)} · <button class="b sm" id="pageBtn">${showAll?"Show 25":"Show all "+arr.length}</button>`:""}
+   ${arr.length?`· <button class="b sm p" id="bulkBtn">Bulk email these ${Math.min(25,arr.length)} with Outlook</button> · Move to <select id="bulk"><option value="">stage…</option>${STAGES.map(s=>`<option value="${s.id}">${s.name}</option>`).join("")}</select>`:""}</div>
+  ${table(showAll?arr:arr.slice(0,25),false)}`;
+  bindStrip(m);
+  const bind=(id,k,ev="change")=>$(id).addEventListener(ev,e=>{filt[k]=e.target.value;vLeads(m);if(k==="q"){const i=$("#fq");i.focus();i.setSelectionRange(i.value.length,i.value.length);}});
+  bind("#fq","q","input");bind("#fs","stage");bind("#fd","district");bind("#fu","due");bind("#fe","email");
+  if($("#fl"))bind("#fl","level"); if($("#fg"))bind("#fg","grades"); if($("#fr"))bind("#fr","region");
+  const bb=$("#bulkBtn"); if(bb)bb.onclick=()=>bulkOpen(arr.slice(0,25));
+  const pb=$("#pageBtn"); if(pb)pb.onclick=()=>{showAll=!showAll;vLeads(m);};
+  const b=$("#bulk"); if(b)b.addEventListener("change",e=>{const st=e.target.value;if(!st)return;
+    if(!confirm(`Move ${arr.length} ${W().many} to "${STAGE[st].name}"?`)){e.target.value="";return;}
+    arr.forEach(l=>setStage(l,st,"bulk")); save(); render();});
+}
+
+/* ---------- Bulk send ---------- */
+function bulkOpen(arr,tid){
+  const d=$("#drawer"); openId=null;
+  const withEmail=arr.filter(l=>l.email), noEmail=arr.length-withEmail.length;
+  tid=tid||suggestTpl(arr[0]||{stage:"new"})||"e1";
+  d.innerHTML=`<div class="row"><h2 style="margin:0" class="grow">Bulk email · ${arr.length} ${W().many}</h2><button class="b sm" id="bx">Close ✕</button></div>
+  ${noEmail?`<div class="banner warn" style="margin-top:10px">${noEmail} have no email and are skipped. Fill them in from HubSpot (Schools → "Missing email").</div>`:""}
+  <h3>1 · Pick the email</h3>
+  <select id="bt" style="width:100%">${tplOptions(tid,null,t=>t.subject)}</select>
+  <div id="bwarn"></div>
+  <h3>Preview (first ${W().one})</h3><pre class="tpl" id="bp"></pre>
+  <h3>2 · Send</h3>
+  <div class="card small" style="margin-bottom:8px;border:1px solid var(--ok)"><b>One Outlook draft, up to 25 in BCC.</b> Opens a compose window with subject + body filled and copies the ${Math.min(25,withEmail.length)} email addresses to your clipboard — click the BCC field in Outlook and paste. Content is identical for everyone (don't use a template with <code>{{first}}</code>-style personal tokens).
+   <div class="row" style="margin-top:6px"><button class="b p sm" id="bo">Open Outlook draft + copy ${Math.min(25,withEmail.length)} BCC</button><span class="small" id="bon" style="margin-left:8px"></span></div></div>
+  <div class="card small" style="margin-bottom:8px"><b>Under ~30 schools: one by one from Gmail.</b> Most personal, best deliverability. Opens a filled Gmail draft per school.
+   <div class="row" style="margin-top:6px"><button class="b sm" id="bg">Open next Gmail draft</button><span class="muted" id="bgn"></span></div></div>
+  <div class="card small" style="margin-bottom:8px"><b>Mail merge (Gmail mail merge, YAMM, GMass).</b> One row per school with subject and body filled in.
+   <div class="row" style="margin-top:6px"><button class="b sm" id="bm">Export merge CSV</button></div></div>
+  <div class="card small" style="margin-bottom:8px"><b>HubSpot marketing email.</b> Tracks opens and clicks, adds the unsubscribe link.
+   <div class="row" style="margin-top:6px"><button class="b sm" id="bh">Copy HubSpot version</button><button class="b sm" id="be">Copy email list</button></div></div>
+  <h3>3 · Log it</h3>
+  <p class="small muted">Logging moves each school forward and schedules its next step.</p>
+  <button class="b p" id="bl">Log as sent for ${withEmail.length} ${W().many}</button>`;
+  d.classList.add("open");
+  let gi=0;
+  const upd=()=>{const id=$("#bt").value, l=withEmail[0]||arr[0];
+    if(!l){$("#bp").textContent="";return;}
+    const r=render1(id,l); $("#bp").textContent="Subject: "+r.s+"\n\n"+r.b;
+    const ph=new Set(withEmail.flatMap(x=>{const q=render1(id,x);return placeholders(q.s+q.b);}));
+    $("#bwarn").innerHTML=ph.size?`<div class="banner warn" style="margin-top:8px">Fill before sending: ${[...ph].map(esc).join(", ")}. Set them in <b>Emails → Settings</b> or per school.</div>`:"";
+    gi=0; $("#bgn").textContent=withEmail.length?`0 of ${withEmail.length} opened`:"";};
+  $("#bt").onchange=upd; upd();
+  $("#bx").onclick=closeDrawer;
+  $("#bg").onclick=()=>{if(gi>=withEmail.length)return;const l=withEmail[gi++],r=render1($("#bt").value,l);
+    window.open(`https://mail.google.com/mail/?view=cm&fs=1&to=${encodeURIComponent(l.email)}&su=${encodeURIComponent(r.s)}&body=${encodeURIComponent(r.b)}`,"_blank");
+    $("#bgn").textContent=`${gi} of ${withEmail.length} opened · last: ${schoolOf(l)}`;};
+  $("#bo").onclick=async()=>{const batch=withEmail.slice(0,25); if(!batch.length)return;
+    const r=render1($("#bt").value,batch[0]);
+    const bcc=batch.map(l=>l.email).join("; ");
+    try{await navigator.clipboard.writeText(bcc);}catch(e){}
+    window.open(outlookUrl("",r.s,r.b),"_blank");
+    $("#bon").innerHTML=`✓ Draft opened · <b>${batch.length} emails copied to clipboard</b> — click the BCC field in Outlook and paste (Ctrl/⌘+V).`;};
+  $("#bm").onclick=()=>{const id=$("#bt").value;
+    const rows=[["Email","First Name","Last Name","Greeting","School","District","Subject","Body"],...withEmail.map(l=>{const r=render1(id,l),t=tokens(l);return [l.email,l.first,l.last,t.greeting,t.school,l.district,r.s,r.b];})];
+    dl(`merge-${id}-${todayISO()}.csv`,rows.map(r=>r.map(csvCell).join(",")).join("\n"),"text/csv");};
+  $("#bh").onclick=()=>{const t=tpl($("#bt").value);navigator.clipboard.writeText("Subject: "+toHubspot(t.subject)+"\n\n"+toHubspot(t.body)).then(()=>flash("#bh","Copied"));};
+  $("#be").onclick=()=>navigator.clipboard.writeText(withEmail.map(l=>l.email).join(", ")).then(()=>flash("#be","Copied"));
+  $("#bl").onclick=()=>{const id=$("#bt").value;if(!confirm(`Log "${tpl(id).name}" as sent to ${withEmail.length} ${W().many}?`))return;
+    withEmail.forEach(l=>logSent(l,id)); save(); closeDrawer();};
+}
+
+/* ---------- Board ---------- */
+function vBoard(m){
+  m.innerHTML=strip()+`<p class="muted small">Drag a card to change its stage. Next step and due date update automatically.</p><div class="board">`+
+  STAGES.map(s=>{const ls=DL().filter(l=>l.stage===s.id);
+    return `<div class="col" data-st="${s.id}" style="--c:${cv(s.id)}"><h4><span>${s.name}</span><span class="muted">${ls.length}</span></h4><div class="ph">${esc(s.desc)}</div>`+
+    ls.slice(0,150).map(l=>`<div class="tile" draggable="true" data-id="${l.id}"><div class="t">${esc(schoolOf(l))}</div><div class="small muted">${esc(name(l))}${l.stage==="contacted"?` · touch ${l.seq||1}/3`:""}${l.shared?" · shared":""}${l.path==="we"?" · we send":""}${l.families?.signups?` · ${esc(l.families.signups)} sign-ups`:""} ${callChip(l)}</div>${l.nextDue?`<div class="small ${dueClass(l.nextDue)}">${fmtDate(l.nextDue)} · ${esc(l.nextAction)}</div>`:""}</div>`).join("")+
+    (ls.length>150?`<div class="small muted">+${ls.length-150} more (use Schools)</div>`:"")+`</div>`;}).join("")+`</div>`;
+  bindStrip(m);
+  m.querySelectorAll(".tile").forEach(t=>t.addEventListener("dragstart",e=>e.dataTransfer.setData("text/plain",t.dataset.id)));
+  m.querySelectorAll(".col").forEach(c=>{
+    c.addEventListener("dragover",e=>{e.preventDefault();c.classList.add("drop");});
+    c.addEventListener("dragleave",()=>c.classList.remove("drop"));
+    c.addEventListener("drop",e=>{e.preventDefault();c.classList.remove("drop");const l=lead(e.dataTransfer.getData("text/plain"));if(l){setStage(l,c.dataset.st);save();render();}});
+  });
+}
+
+/* ---------- School drawer ---------- */
+function newLead(){const l={id:uid(),...(ds!=="principal"?{type:ds}:{}),stage:"new",seq:0,sent:[],activity:[],families:{},path:"",createdAt:new Date().toISOString()};
+  setNext(l);S.leads.push(l);save();openLead(l.id);render();}
+function openLead(id){openId=id;drawer();}
+function closeDrawer(){openId=null;$("#drawer").classList.remove("open");render();}
+function drawer(){
+  const l=lead(openId); const d=$("#drawer"); if(!l){d.classList.remove("open");return;}
+  const fam=l.families||{};
+  const inp=(k,lab,type="text",ph="")=>`<label>${lab}</label><input data-k="${k}" type="${type}" value="${esc(l[k])}" placeholder="${esc(ph)}">`;
+  const sug=suggestTpl(l);
+  d.innerHTML=`<div class="row"><h2 style="margin:0" class="grow">${esc(schoolOf(l))}</h2><button class="b sm" onclick="closeDrawer()">Close ✕</button></div>
+  <div class="muted small">${esc(name(l))}${l.district&&l.school?" · "+esc(l.district):""}</div>
+  <div class="row small" style="margin-top:4px"><b style="font-size:15px">${telLink(l)}</b><span>${mailLink(l)}</span></div>
+  <div style="margin:12px 0">${stepper(l)}</div>
+  <div class="card small"><b>Next:</b> ${esc(l.nextAction||"—")} ${l.nextDue?`<span class="${dueClass(l.nextDue)}">· ${fmtDate(l.nextDue)}</span>`:""}</div>
+  ${linkBox(l)}
+  <h3>Call outcome</h3>
+  <div class="row">${CALL_IDS.map(k=>`<button class="b sm ${l.call?.status===k?"p":""}" data-cst="${k}">${esc(CALLS[k].name)}</button>`).join("")}${l.call?.status?`<button class="b sm" id="callClear" title="Remove this call outcome">Clear ✕</button>`:""}</div>
+  <div class="row" style="margin-top:6px"><input id="callNote" class="grow" placeholder="Call note (no student or family details)" value="${esc(l.call?.note)}">
+   <label class="small"><input type="checkbox" id="callFund" ${l.call?.fundraising?"checked":""}> Wants fundraising info</label></div>
+  ${l.call?.status?`<div class="small muted" style="margin-top:4px">Last call: ${new Date(l.call.ts).toLocaleString()}${l.call.by?" · "+esc(l.call.by):""}</div>`:""}
+  <h3>Email</h3>
+  <div class="row"><select id="tplPick" class="grow">${tplOptions(sug,sug)}</select></div>
+  <div class="row" style="margin-top:6px"><button class="b sm" id="tplOutlook">Open in Outlook</button><button class="b sm" id="tplMail">Open in mail app</button><button class="b sm" id="tplCopy">Copy</button><button class="b sm p" id="tplSent">Log as sent</button><button class="b sm d" id="tplRej" title="The email bounced or was rejected">${l.stage==="rejected"?"Rejected ✓":"Rejected"}</button></div>
+  <div id="tplWarn"></div>
+  <pre class="tpl" id="tplPrev"></pre>
+  <div class="small muted">★ = suggested for where this school is. <b>Log as sent</b> moves it forward and schedules the next step.</div>
+  <h3>Log a touch</h3>
+  <div class="row">${ACTS.map(a=>`<button class="b sm" data-act="${a}">${a}</button>`).join("")}</div>
+  <input id="actNote" placeholder="Optional note (no student or family details)" style="width:100%;margin-top:6px">
+  <h3>Family sign-ups (this school's code)</h3>
+  <div class="f">
+   <label>Parent sign-ups</label><input data-fam="signups" type="number" min="0" value="${esc(fam.signups)}" placeholder="not yet measured">
+   <label>Activated (setup verified)</label><input data-fam="activated" type="number" min="0" value="${esc(fam.activated)}" placeholder="not yet measured">
+   <label>Counts as of</label><input data-fam="asOf" type="date" value="${esc(fam.asOf)}">
+  </div>
+  <p class="small muted">Any sign-ups move the school to Live. ${esc(S.settings.activeTarget)}+ moves it to Active (change the target in Emails → Settings).</p>
+  <h3>Status</h3>
+  <div class="f">
+   <label>Stage</label><select data-k="stage">${STAGES.map(s=>`<option value="${s.id}" ${l.stage===s.id?"selected":""}>${s.name}: ${s.desc}</option>`).join("")}</select>
+   <label>Outreach touches</label><select data-k="seq">${SEQ.map((s,i)=>`<option value="${i}" ${(l.seq||0)==i?"selected":""}>${i}${s?" · "+s:""}</option>`).join("")}</select>
+   <label>Shared with families</label><select data-k="shared"><option value="" ${!l.shared?"selected":""}>Not confirmed</option><option value="1" ${l.shared?"selected":""}>Principal says it's shared</option></select>
+   <label>Who sends to families</label><select data-k="path"><option value="" ${l.path!=="we"?"selected":""}>School forwards it (default)</option><option value="we" ${l.path==="we"?"selected":""}>We send it (exception)</option></select>
+   <label>Next step</label><input data-k="nextAction" value="${esc(l.nextAction)}">
+   <label>Due</label><input data-k="nextDue" type="date" value="${esc(l.nextDue)}">
+  </div>
+  <h3>School and contact</h3>
+  <div class="f">
+   ${inp("school","School","text","HubSpot often only has the district")}${inp("district","District")}
+   ${inp("regLink","Sign-up link","url","This school's registration link")}${inp("code","Referral / QR code")}
+   ${inp("level","Level","text","Middle / Junior High")}${inp("grades","Grades","text","e.g. 06-08")}${inp("city","City")}${inp("region","Region")}
+   ${inp("first","First name")}${inp("last","Last name")}
+   ${inp("title_salutation","Salutation","text","Dr. / Mr. / Ms. (blank = first name)")}
+   ${inp("jobtitle","Job title")}${inp("email","Email","email")}${inp("phone","Phone","tel")}
+   ${inp("owner","HubSpot owner")}${inp("hubspotId","HubSpot record ID")}${inp("districtId","District ID")}${isCamp(l)?inp("campaign","Campaigns","text","Comma-separated")+inp("state","State"):""}
+  </div>
+  <h3>Notes</h3>
+  <textarea data-k="notes" placeholder="Context, objections, who to ask for. No student or family details.">${esc(l.notes)}</textarea>
+  <h3>History</h3>
+  <div class="log">${(l.activity||[]).slice().reverse().map(a=>`<div><b>${esc(a.type)}</b> <span class="muted small">${new Date(a.ts).toLocaleString()}</span><div class="small">${esc(a.note)}</div></div>`).join("")||'<span class="muted small">No activity yet.</span>'}</div>
+  <div class="row" style="margin-top:16px"><button class="b sm" id="resetLead" title="Clear touches, emails sent, call outcome, sign-ups and history. Contact details and notes stay.">Reset outreach</button><button class="b d sm" id="delLead">Delete ${isOv(l)?"overseer":isCamp(l)||isPta(l)?"contact":isUser(l)?"user":"school"}</button></div>`;
+  d.classList.add("open");
+  d.querySelectorAll("[data-jump]").forEach(el=>el.addEventListener("click",e=>{if(e.target.closest("a"))return;const t=lead(el.dataset.jump);if(t&&!inDs(t)){ds=t.type||"principal";try{localStorage.setItem(KEY+"-ds",ds);}catch(_){}}openLead(el.dataset.jump);render();}));
+  d.querySelectorAll("[data-k]").forEach(el=>el.addEventListener("change",()=>{
+    const k=el.dataset.k;
+    if(k==="stage"){setStage(l,el.value);save();drawer();render();return;}
+    if(k==="seq"){l.seq=+el.value;setNext(l);}
+    else if(k==="shared"){l.shared=!!el.value; if(l.shared){log(l,"Says they shared it",""); if(fwd(l,"engaged"))setStage(l,"engaged"); else setNext(l);} }
+    else if(k==="path"){l.path=el.value; setNext(l);}
+    else l[k]=el.value;
+    l.updatedAt=new Date().toISOString(); save(); drawer(); render(); }));
+  d.querySelectorAll("[data-fam]").forEach(el=>el.addEventListener("change",()=>{
+    if(el.dataset.fam==="signups")setSignups(l,el.value);
+    else {l.families=l.families||{};l.families[el.dataset.fam]=el.value;}
+    save();drawer();render();}));
+  d.querySelectorAll("[data-cst]").forEach(b=>b.addEventListener("click",()=>{
+    const note=$("#callNote").value.trim(); l.call={...(l.call||{}),note}; setCall(l,b.dataset.cst,note); save(); drawer(); render();}));
+  const cc=$("#callClear"); if(cc)cc.addEventListener("click",()=>{setCall(l,"");save();drawer();render();});
+  $("#callNote").addEventListener("change",e=>{l.call={...(l.call||{}),note:e.target.value.trim()};save();});
+  $("#callFund").addEventListener("change",e=>{l.call={...(l.call||{}),fundraising:e.target.checked};log(l,"Note",e.target.checked?"Wants fundraising program info":"Fundraising info: no");save();drawer();});
+  d.querySelectorAll("[data-act]").forEach(b=>b.addEventListener("click",()=>{
+    const a=b.dataset.act, note=$("#actNote").value.trim(); log(l,a,note); autoAdvance(l,a); save(); drawer(); render();}));
+  const pick=$("#tplPick");
+  const prev=()=>{const r=render1(pick.value,l);$("#tplPrev").textContent=(r.s?"Subject: "+r.s+"\n\n":"")+r.b;
+    const ph=placeholders(r.s+r.b);$("#tplWarn").innerHTML=ph.length?`<div class="banner warn" style="margin-top:6px">Fill before sending: ${ph.map(esc).join(", ")}</div>`:"";};
+  prev(); pick.addEventListener("change",prev);
+  $("#tplCopy").onclick=()=>{const r=render1(pick.value,l);navigator.clipboard.writeText((r.s?"Subject: "+r.s+"\n\n":"")+r.b).then(()=>flash("#tplCopy","Copied"));};
+  $("#tplOutlook").onclick=()=>{const r=render1(pick.value,l);window.open(outlookUrl(l.email,r.s,r.b),"_blank");};
+  $("#tplMail").onclick=()=>{const r=render1(pick.value,l);location.href=`mailto:${encodeURIComponent(l.email||"")}?subject=${encodeURIComponent(r.s)}&body=${encodeURIComponent(r.b)}`;};
+  $("#tplSent").onclick=()=>{logSent(l,pick.value);save();drawer();render();};
+  $("#tplRej").onclick=()=>{if(l.stage==="rejected")return;log(l,"Email rejected",l.email||"");setStage(l,"rejected");save();drawer();render();};
+  $("#resetLead").onclick=()=>{if(confirm("Reset this "+(isOv(l)?"overseer":isCamp(l)||isPta(l)?"contact":isUser(l)?"user":"school")+" to Cold and start over?\n\nThis clears touches, emails sent, the call outcome, sign-up counts and the whole history. Contact details and notes stay. This can't be undone.")){resetLead(l);save();drawer();render();}};
+  $("#delLead").onclick=()=>{if(confirm("Delete this school and its history?")){S.leads=S.leads.filter(x=>x.id!==l.id);save();closeDrawer();}};
+}
+// Overseer drawer: every school in the district with its principal's contact info. Principal drawer: the district's overseer.
+function linkBox(l){
+  if(isPta(l)||isUser(l))return "";
+  if(isCamp(l)){const d=domainOf(l); const ppl=d?S.leads.filter(x=>!isCamp(x)&&domainOf(x)===d):[];
+    return `<h3>Campaigns</h3><div class="row">${campsOf(l).map(c=>`<span class="chip">${esc(c)}</span>`).join(" ")||'<span class="small muted">None</span>'}</div>`+
+      (ppl.length?`<h3>Already in our pipeline at @${esc(d)} (${ppl.length})</h3><div class="subl">${ppl.map(s=>`<div class="it" data-jump="${s.id}">
+      <div><b>${esc(name(s))}</b><div class="small">${isOv(s)?"District overseer":esc(schoolOf(s))}</div></div>
+      <div class="small" style="text-align:right">${telLink(s)}<div><span class="dot" style="--c:${cv(s.stage)}"></span>${esc(STAGE[s.stage].name)}</div></div></div>`).join("")}</div>`:"");}
+  if(isOv(l)){const ss=schoolsOf(l);
+    return `<h3>Schools in this district (${ss.length})</h3>`+(ss.length?`<div class="subl">${ss.map(s=>`<div class="it" data-jump="${s.id}">
+      <div><b>${esc(schoolOf(s))}</b><div class="small">${esc(name(s))}${s.jobtitle?" · "+esc(s.jobtitle):""}</div></div>
+      <div class="small" style="text-align:right">${telLink(s)}<div>${mailLink(s)}</div><span class="dot" style="--c:${cv(s.stage)}"></span>${esc(STAGE[s.stage].name)}${s.call&&CALLS[s.call.status]?" · "+esc(CALLS[s.call.status].short):""}</div></div>`).join("")}</div>`
+      :`<p class="small muted">No principals matched. Check that the District ID or district name matches the principal data.</p>`);}
+  const o=overseerOf(l); if(!o)return "";
+  return `<h3>District overseer</h3><div class="subl"><div class="it" data-jump="${o.id}"><div><b>${esc(name(o))}</b><div class="small">${esc(o.jobtitle||"District overseer")} · ${esc(o.district)} · ${schoolsOf(o).length} schools</div></div>
+    <div class="small" style="text-align:right">${telLink(o)}<div>${mailLink(o)}</div><span class="dot" style="--c:${cv(o.stage)}"></span>${esc(STAGE[o.stage].name)}</div></div></div>`;
+}
+function flash(sel,txt){const b=$(sel),o=b.textContent;b.textContent=txt;setTimeout(()=>b.textContent=o,1200);}
+
+/* ---------- Map ---------- */
+function vMap(m){
+  const data=window.MO_DISTRICTS;
+  if(!data||!data.features){m.innerHTML=`<div class="card"><h2 style="margin-top:0">Map data not loaded</h2><p><code>district-boundaries.js</code> wasn't found next to this file. It ships the Missouri school-district polygons (source: MO DESE / MSDIS). Reload once it's in the same folder as this HTML.</p></div>`;return;}
+  // Count leads per DESE district code and by normalized name.
+  const byCode={}, byName={}, nameOf={};
+  DL().forEach(l=>{
+    if(l.districtId){const k=String(l.districtId).trim();byCode[k]=(byCode[k]||0)+1;if(l.district)nameOf[k]=l.district;}
+    const n=normD(l.district); if(n)byName[n]=(byName[n]||0)+1;
+  });
+  const countFor=f=>{const c=f.properties.code; if(c&&byCode[c]!=null)return byCode[c]; return byName[normD(f.properties.name)]||0;};
+  const counts=data.features.map(countFor);
+  const max=Math.max(1,...counts);
+  // Linear-equirectangular projection, Missouri scale is fine without a real projection.
+  const feats=data.features;
+  let minX=Infinity,minY=Infinity,maxX=-Infinity,maxY=-Infinity;
+  const eachRing=(g,fn)=>{if(g.type==="Polygon")g.coordinates.forEach(fn);else if(g.type==="MultiPolygon")g.coordinates.forEach(p=>p.forEach(fn));};
+  feats.forEach(f=>eachRing(f.geometry,r=>r.forEach(([x,y])=>{if(x<minX)minX=x;if(x>maxX)maxX=x;if(y<minY)minY=y;if(y>maxY)maxY=y;})));
+  const W=1000,H=700,pad=10;
+  // Latitude correction so Missouri doesn't look squashed.
+  const midLat=(minY+maxY)/2, kx=Math.cos(midLat*Math.PI/180);
+  const dx=(maxX-minX)*kx, dy=maxY-minY;
+  const s=Math.min((W-2*pad)/dx,(H-2*pad)/dy);
+  const ox=(W-dx*s)/2, oy=(H-dy*s)/2;
+  const px=x=>ox+(x-minX)*kx*s, py=y=>H-oy-(y-minY)*s;
+  const ringPath=r=>r.map(([x,y],i)=>(i?"L":"M")+px(x).toFixed(1)+" "+py(y).toFixed(1)).join("")+"Z";
+  const geomPath=g=>g.type==="Polygon"?g.coordinates.map(ringPath).join(""):g.coordinates.map(p=>p.map(ringPath).join("")).join("");
+  // Heat color: darker = more leads. Use the existing accent blue family.
+  const heat=n=>{if(!n)return "var(--sx)"; const t=Math.min(1,n/max); const L=85-t*55; return `hsl(220 70% ${L}%)`;};
+  const paths=feats.map((f,i)=>{
+    const n=counts[i], p=f.properties;
+    return `<path d="${geomPath(f.geometry)}" fill="${heat(n)}" stroke="var(--line)" stroke-width="0.5" data-i="${i}" data-n="${n}"></path>`;
+  }).join("");
+  const total=counts.reduce((a,b)=>a+b,0), hit=counts.filter(n=>n>0).length;
+  m.innerHTML=`<div class="card"><div class="row" style="justify-content:space-between;align-items:flex-start;gap:12px;flex-wrap:wrap">
+    <div><h2 style="margin:0 0 4px">Missouri lead map</h2><div class="small muted">${total} ${ds==="overseer"?"overseers":ds==="campaign"?"campaign contacts":ds==="pta"?"PTA contacts":ds==="user"?"users":"principals"} across ${hit} of ${feats.length} districts · click a district to filter Schools</div></div>
+    <div class="row" style="align-items:center;gap:8px"><span class="small muted">fewer</span>
+      <svg width="140" height="12" style="display:block"><defs><linearGradient id="mapGrad" x1="0" x2="1"><stop offset="0" stop-color="hsl(220 70% 85%)"/><stop offset="1" stop-color="hsl(220 70% 30%)"/></linearGradient></defs><rect width="140" height="12" rx="2" fill="url(#mapGrad)"/></svg>
+      <span class="small muted">more (max ${max})</span></div>
+  </div>
+  <div style="position:relative;margin-top:12px">
+    <svg id="moMap" viewBox="0 0 ${W} ${H}" style="width:100%;height:auto;background:var(--panel);border:1px solid var(--line);border-radius:6px;display:block">${paths}</svg>
+    <div id="mapTip" style="position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:4px;padding:4px 8px;font-size:12px;box-shadow:0 2px 8px rgba(0,0,0,.15);display:none;z-index:2;white-space:nowrap"></div>
+  </div></div>`;
+  const svg=$("#moMap"), tip=$("#mapTip");
+  svg.addEventListener("mousemove",e=>{
+    const t=e.target.closest("path"); if(!t){tip.style.display="none";return;}
+    const i=+t.dataset.i, f=feats[i], n=+t.dataset.n;
+    const rect=svg.getBoundingClientRect();
+    tip.innerHTML=`<b>${esc(f.properties.name)}</b><br><span class="muted">${esc(f.properties.county||"")}${f.properties.county?" County · ":""}code ${esc(f.properties.code||"—")}</span><br>${n} ${n===1?"lead":"leads"}`;
+    tip.style.display="block";
+    tip.style.left=Math.min(e.clientX-rect.left+12,rect.width-tip.offsetWidth-6)+"px";
+    tip.style.top=(e.clientY-rect.top+12)+"px";
+  });
+  svg.addEventListener("mouseleave",()=>tip.style.display="none");
+  svg.addEventListener("click",e=>{
+    const t=e.target.closest("path"); if(!t)return;
+    const i=+t.dataset.i, f=feats[i], code=f.properties.code;
+    // Prefer a district name that exists in the current list so the filter matches.
+    let name=null;
+    if(code){const l=DL().find(x=>String(x.districtId||"").trim()===code); if(l&&l.district)name=l.district;}
+    if(!name){const nd=normD(f.properties.name); const l=DL().find(x=>normD(x.district)===nd); if(l&&l.district)name=l.district;}
+    if(!name)name=f.properties.name;
+    filt.district=name; view="leads"; render();
+  });
+}
+
+/* ---------- Emails ---------- */
+function vTemplates(m){
+  const phases=[...new Set(S.templates.map(t=>t.phase||"Other"))];
+  const st=S.settings;
+  const v=vaultTemplates();
+  m.innerHTML=`<div class="banner">${v?`Emails are synced from the vault's <b>Emails/</b> folder (${v.templates.length} emails, ${v.categories.length} categories, synced ${esc(new Date(v.generated).toLocaleString())}). Each folder is a category. <b>Edit, add or delete emails in the vault</b>, then run <code>python3 .claude/scripts/sync-emails.py</code> and reload. Edits made here are replaced at the next sync.`:`<b>Not linked to the vault.</b> <code>email-templates.js</code> wasn't found next to this file. Run <code>python3 .claude/scripts/sync-emails.py</code> in the vault, then reload.`}</div>
+  <div class="banner warn">⚠️ The approved-claims list is still <b>UNAPPROVED</b>. Product and offer lines (what the app detects, "free for one year", grades 5–9, "nothing to sign", "never collects passwords", the MSBA collaboration) need Torino's sign-off before the first send. Text in [brackets] must be filled in.</div>
+  <div class="card" style="margin-bottom:12px"><h2 style="margin-top:0">Settings used in every email</h2>
+   <div class="f">
+    <label>Your sign-off name</label><input data-s="sender" value="${esc(st.sender)}">
+    <label>Your phone</label><input data-s="phone" value="${esc(st.phone)}" placeholder="Shown in your signature and voicemail">
+    <label>Parent onboarding page</label><input data-s="onboardingPage" value="${esc(st.onboardingPage)}" placeholder="Link to Welcome: Parent Onboarding page">
+    <label>Default sign-up link</label><input data-s="defaultLink" value="${esc(st.defaultLink)}" placeholder="Used when a school has no link of its own">
+    <label>Support contact for parents</label><input data-s="support" value="${esc(st.support)}" placeholder="Email or phone parents can contact">
+    <label>"Active" target</label><input data-s="activeTarget" type="number" min="1" value="${esc(st.activeTarget)}" placeholder="Sign-ups for a school to count as Active">
+   </div>
+   <p class="small muted">Merge fields: <code>{{greeting}}</code> <code>{{first}}</code> <code>{{last}}</code> <code>{{school}}</code> <code>{{district}}</code> <code>{{sender}}</code> <code>{{phone}}</code> <code>{{signup_link}}</code> <code>{{onboarding_page}}</code> <code>{{support}}</code> <code>{{signups}}</code> <code>{{parent_email}}</code> (inserts P1) <code>{{newsletter}}</code> (inserts N1). With no school name, <code>{{school}}</code> uses the district.</p></div>`+
+  phases.map(ph=>`<h2>${esc(ph)}</h2><div class="grid">`+S.templates.filter(t=>(t.phase||"Other")===ph).map(t=>`<div class="card">
+   <div class="row"><input data-t="${t.id}" data-f="name" value="${esc(t.name)}" class="grow" style="font-weight:600">
+    <span class="small muted">${t.to?"Logged → "+esc(STAGE[t.to]?.name):"No stage change"}</span>
+    <button class="b sm" data-hs="${t.id}">Copy HubSpot version</button><button class="b sm d" data-del="${t.id}">Delete</button></div>
+   <input data-t="${t.id}" data-f="subject" value="${esc(t.subject)}" placeholder="Subject (blank for scripts and blurbs)" style="width:100%;margin:6px 0">
+   <textarea data-t="${t.id}" data-f="body" style="min-height:${Math.min(440,80+t.body.split("\n").length*19)}px">${esc(t.body)}</textarea></div>`).join("")+`</div>`).join("")+
+  `<div class="row" style="margin-top:12px"><button class="b" id="addT">+ New email</button><button class="b" id="resetT">${vaultTemplates()?"Reload emails from the vault":"Restore default emails"}</button></div>`;
+  m.querySelectorAll("[data-s]").forEach(el=>el.onchange=()=>{S.settings[el.dataset.s]=el.value.trim();save();});
+  m.querySelectorAll("[data-t]").forEach(el=>el.addEventListener("change",()=>{const t=tpl(el.dataset.t);t[el.dataset.f]=el.value;save();}));
+  m.querySelectorAll("[data-hs]").forEach(b=>b.onclick=()=>{const t=tpl(b.dataset.hs);navigator.clipboard.writeText((t.subject?"Subject: "+toHubspot(t.subject)+"\n\n":"")+toHubspot(t.body)).then(()=>{b.textContent="Copied";setTimeout(()=>b.textContent="Copy HubSpot version",1200);});});
+  m.querySelectorAll("[data-del]").forEach(b=>b.onclick=()=>{if(confirm("Delete this email?")){S.templates=S.templates.filter(x=>x.id!==b.dataset.del);save();render();}});
+  $("#addT").onclick=()=>{S.templates.push({id:uid(),phase:"Other",name:"New email",to:null,subject:"",body:""});save();render();};
+  $("#resetT").onclick=()=>{if(!confirm("Replace all emails with the "+(vaultTemplates()?"vault's":"default")+" versions? Edits made in the app will be lost."))return;
+    if(!syncVault(S,true))S.templates=DEFAULT_TEMPLATES.map(t=>({...t})); save(); render();};
+}
+
+/* ---------- Dashboard ---------- */
+function vDash(m){
+  const L=DL(), n=L.length;
+  const reach=id=>L.filter(l=>MAIN.indexOf(l.stage)>=MAIN.indexOf(id)).length;
+  const contacted=L.filter(l=>l.stage!=="new").length;
+  const pct=(a,b)=>b?Math.round(a/b*100)+"%":"not yet measurable";
+  const fam=k=>{const v=L.map(l=>l.families?.[k]).filter(x=>x!==undefined&&x!=="");return v.length?{sum:v.reduce((a,b)=>a+ +b,0),n:v.length}:null;};
+  const sg=fam("signups"),ac=fam("activated");
+  const ds=[...new Set(L.map(l=>l.district||"(none)"))].sort();
+  const roll=ds.map(d=>{const ls=L.filter(l=>(l.district||"(none)")===d);
+    const seg=STAGES.map(s=>{const c=ls.filter(l=>l.stage===s.id).length;return c?`<span style="width:${c/ls.length*100}%;background:${cv(s.id)}" title="${s.name}: ${c}"></span>`:"";}).join("");
+    const su=ls.reduce((a,l)=>a+(+l.families?.signups||0),0);
+    return `<tr><td>${esc(d)}</td><td>${ls.length}</td><td style="min-width:180px"><div class="stack">${seg}</div></td>${MAIN.map(s=>`<td>${ls.filter(l=>l.stage===s).length||""}</td>`).join("")}<td>${su||""}</td></tr>`;}).join("");
+  const days=[...Array(14)].map((_,i)=>{const d=new Date();d.setDate(d.getDate()-13+i);return iso(d);});
+  const cnt=Object.fromEntries(days.map(d=>[d,0]));
+  L.forEach(l=>(l.activity||[]).forEach(a=>{const d=a.ts.slice(0,10);if(d in cnt&&a.type!=="Stage"&&a.type!=="Note")cnt[d]++;}));
+  const mx=Math.max(1,...Object.values(cnt));
+  m.innerHTML=rptCard()+strip()+`<div class="banner">Two funnels: <b>schools</b> (Cold → Active) and <b>families</b> (sign-ups → activated). A school replying is not a family activation.</div>
+  <h2>School conversion</h2>
+  <div class="grid kpis">
+   <div class="card kpi"><div class="l">Contacted</div><div class="v">${contacted}</div><div class="s">${pct(contacted,n)} of ${n} schools</div></div>
+   <div class="card kpi"><div class="l">Engaged or further</div><div class="v">${reach("engaged")}</div><div class="s">${pct(reach("engaged"),contacted)} of contacted</div></div>
+   <div class="card kpi"><div class="l">Live (sign-ups)</div><div class="v">${reach("live")}</div><div class="s">${pct(reach("live"),contacted)} of contacted</div></div>
+   <div class="card kpi"><div class="l">Active</div><div class="v">${reach("active")}</div><div class="s">${esc(S.settings.activeTarget)}+ sign-ups each</div></div>
+  </div>
+  <h2>Calls to principals who opened the emails</h2>
+  <div class="grid kpis">
+   <div class="card kpi"><div class="l">Not called yet</div><div class="v">${L.filter(l=>!CALLS[l.call?.status]).length}</div></div>
+   ${CALL_IDS.map(k=>`<div class="card kpi"><div class="l"><span class="dot" style="--c:var(${CALLS[k].c})"></span>${esc(CALLS[k].name)}</div><div class="v">${L.filter(l=>l.call?.status===k).length}</div></div>`).join("")}
+   <div class="card kpi"><div class="l">Want fundraising info</div><div class="v">${L.filter(l=>l.call?.fundraising).length}</div></div>
+  </div>
+  <h2>Families</h2>
+  <div class="grid kpis">
+   <div class="card kpi"><div class="l">Parent sign-ups</div><div class="v">${sg?sg.sum:"—"}</div><div class="s">${sg?`from ${sg.n} schools reporting`:"not yet measurable"}</div></div>
+   <div class="card kpi"><div class="l">Activated</div><div class="v">${ac?ac.sum:"—"}</div><div class="s">${ac&&sg?pct(ac.sum,sg.sum)+" of sign-ups":"not yet measurable"}</div></div>
+  </div>
+  <h2>By district</h2>
+  <div class="tablewrap"><table><thead><tr><th>District</th><th>Schools</th><th>Pipeline</th>${MAIN.map(s=>`<th><span class="dot" style="--c:${cv(s)}"></span>${STAGE[s].name}</th>`).join("")}<th>Sign-ups</th></tr></thead><tbody>${roll}</tbody></table></div>
+  <h2>Touches per day (last 14 days)</h2>
+  <div class="card">${days.map(d=>`<div class="barrow"><span>${fmtDate(d)}</span><div><div class="bar" style="width:${cnt[d]/mx*100}%"></div></div><span>${cnt[d]}</span></div>`).join("")}</div>
+  <h2>Copy for your check-in</h2>
+  <pre class="tpl" id="sum">CyberSafely Lead Manager, as of ${fmtDate(todayISO())}: ${n} schools across ${ds.length} districts. Contacted ${contacted} (${pct(contacted,n)}). Engaged or further ${reach("engaged")}. Live ${reach("live")}. Active ${reach("active")}. Nurture ${L.filter(l=>l.stage==="nurture").length}, declined ${L.filter(l=>l.stage==="lost").length}. Calls: ${CALL_IDS.map(k=>CALLS[k].short.toLowerCase()+" "+L.filter(l=>l.call?.status===k).length).join(", ")}; not called ${L.filter(l=>!CALLS[l.call?.status]).length}. Family sign-ups: ${sg?sg.sum+" (from "+sg.n+" schools)":"not yet measurable"}. Activated: ${ac?ac.sum:"not yet measurable"}.</pre>
+  <button class="b sm" onclick="navigator.clipboard.writeText($('#sum').textContent).then(()=>flash('#cpS','Copied'))" id="cpS">Copy summary</button>
+  <p class="small muted">Counts only, safe to paste into the vault or a report.</p>`;
+  bindStrip(m); bindRpt(m);
+}
+
+/* ---------- Progress report ---------- */
+// 1–2 page, counts-only report for Torino (Mon · Wed · Fri). Covers every list. The period runs from the last
+// exported report to now. Opens in a new tab → Print → Save as PDF. No names, emails or phone numbers.
+const LISTS=[["principal","Principals"],["overseer","Overseers"],["campaign","Campaigns"],["pta","PTA"],["user","App users"]];
+const CALL_ACTS=["Call","Call: reached","Voicemail","Front office message"];
+const TALK_ACTS=["Call: reached","Reply received","Meeting / demo","Says they shared it"];
+const RPT_C={new:"#9aa3ad",contacted:"#5b8def",rejected:"#b42318",engaged:"#8b6cf0",live:"#e0a03a",active:"#1f9d5c",nurture:"#c9ced6",lost:"#7d858f"};
+function dtLocal(d){return iso(d)+"T"+String(d.getHours()).padStart(2,"0")+":"+String(d.getMinutes()).padStart(2,"0");}
+function rptSet(){return S.settings.report=S.settings.report||{focus:"",wins:"",blockers:"",next:"",log:[]};}
+function rptDefaultFrom(){
+  // Last report older than 2 h (so a same-day re-export keeps the same period); else Monday of this week
+  const cut=Date.now()-2*3600e3, last=(rptSet().log||[]).filter(t=>new Date(t).getTime()<cut).pop();
+  if(last)return new Date(last);
+  const d=new Date();d.setHours(0,0,0,0);d.setDate(d.getDate()-((d.getDay()+6)%7));return d;
+}
+function rptCard(){
+  const r=rptSet(), last=(r.log||[]).slice(-1)[0];
+  const ta=(k,lab,ph)=>`<label>${lab}</label><textarea data-r="${k}" style="min-height:52px" placeholder="${esc(ph)}">${esc(r[k])}</textarea>`;
+  return `<div class="card" id="rpt" style="margin-bottom:14px">
+  <div class="row"><h2 style="margin:0" class="grow">Progress report</h2><span class="small muted">${last?"Last exported "+new Date(last).toLocaleString(undefined,{weekday:"short",month:"short",day:"numeric",hour:"numeric",minute:"2-digit"}):"No report exported yet"}</span></div>
+  <p class="small muted" style="margin:4px 0 10px">1–2 pages for Torino (Mon · Wed · Fri), covering every list. Counts only: no names, emails or phone numbers. Opens in a new tab → <b>Print → Save as PDF</b>.</p>
+  <div class="f">
+   <label>Period from</label><input type="datetime-local" id="rFrom" value="${dtLocal(rptDefaultFrom())}">
+   <label>District / region in focus</label><input data-r="focus" value="${esc(r.focus)}" placeholder="e.g. Springfield, Region 3 (comma-separated, matches district names)">
+  </div>
+  <details style="margin-top:8px"><summary class="small"><b>Notes for this report</b> (optional, kept until you change them)</summary>
+   <div class="f" style="margin-top:8px">${ta("wins","Highlights","What went well since the last report")}${ta("blockers","Blockers / help needed","What's in the way, what you need from Torino")}${ta("next","Next focus","Plan until the next report")}</div></details>
+  <div class="row" style="margin-top:10px"><button class="b p" id="rGo">Export progress report</button><button class="b" id="rDl">Download .html</button>
+   <span class="small muted">No student, family or contact details in the notes.</span></div></div>`;
+}
+function bindRpt(m){
+  const r=rptSet();
+  m.querySelectorAll("[data-r]").forEach(el=>el.addEventListener("change",()=>{r[el.dataset.r]=el.value.trim();save();}));
+  const go=open=>{
+    m.querySelectorAll("[data-r]").forEach(el=>r[el.dataset.r]=el.value.trim());
+    const v=$("#rFrom").value, from=v?new Date(v):rptDefaultFrom(), to=new Date();
+    if(!(from<to)){alert("The period start must be in the past.");return;}
+    const html=rptHtml({from,to,...r,n:(r.log||[]).length+1}), file=`progress-report-${todayISO()}.html`;
+    if(open){const url=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+      if(!window.open(url,"_blank"))dl(file,html,"text/html"); setTimeout(()=>URL.revokeObjectURL(url),120000);}
+    else dl(file,html,"text/html");
+    r.log=[...(r.log||[]),to.toISOString()].slice(-60); save(); render();
+  };
+  $("#rGo").onclick=()=>go(true); $("#rDl").onclick=()=>go(false);
+}
+// Report styles, shared by the exported page and the Analytics tab. p = selector prefix (".rpt " in the app).
+// Colors come from the app's tokens, so the Analytics tab follows light/dark; the exported page sets them light.
+function rptCss(p){
+  const R=[
+  ".rh{display:flex;justify-content:space-between;align-items:flex-end;gap:12px;flex-wrap:wrap;border-bottom:2px solid var(--accent);padding-bottom:6px}",
+  "h1{font-size:1.7em;margin:0;font-weight:700}",
+  ".meta{color:var(--muted);text-align:right;font-size:.95em}",
+  "h2{font-size:1.05em;text-transform:uppercase;letter-spacing:.06em;color:var(--accent);border-bottom:1px solid var(--line);padding-bottom:2px;margin:1.2em 0 .6em}",
+  "section{break-inside:avoid}",
+  ".sum{background:var(--chip);border-left:3px solid var(--accent);padding:6px 10px;margin-top:10px;font-size:1.05em}",
+  ".kp{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}",
+  ".k{border:1px solid var(--line);border-radius:6px;padding:5px 8px;background:var(--panel)}",
+  ".k .l{font-size:.85em;color:var(--muted);text-transform:uppercase;letter-spacing:.03em}",
+  ".k .v{font-size:1.8em;font-weight:700;line-height:1.2}",
+  ".k .s{font-size:.85em;color:var(--muted)}",
+  ".two{display:grid;grid-template-columns:1fr 1fr;gap:16px}",
+  "table{width:100%;border-collapse:collapse;font-size:.95em;background:none}",
+  "th,td{padding:.25em .5em;border-bottom:1px solid var(--line);text-align:left;vertical-align:top}",
+  "th{color:var(--muted);font-weight:600;font-size:.85em;text-transform:uppercase;position:static;background:none}",
+  ".n{text-align:right;white-space:nowrap}",
+  "tr.tot td{font-weight:700;border-top:1px solid var(--muted)}",
+  ".dot{display:inline-block;width:8px;height:8px;border-radius:50%;margin-right:5px;vertical-align:middle}",
+  ".stack{display:flex;height:12px;border-radius:3px;overflow:hidden;background:var(--chip);margin:2px 0 6px;min-width:0}",
+  ".stack span{display:block;height:100%}",
+  ".leg{display:flex;flex-wrap:wrap;gap:4px 10px;font-size:.85em;color:var(--muted);margin-bottom:4px}",
+  ".br{display:grid;grid-template-columns:6.5em 1fr 3.4em;gap:6px;align-items:center;font-size:.9em;margin:1.5px 0}",
+  ".br .t{display:flex;height:9px;background:var(--chip);border-radius:2px;overflow:hidden}",
+  ".br .t span{display:block;height:100%}",
+  ".m{color:var(--muted)}",
+  ".star{color:var(--warn);font-weight:700}",
+  ".bad{color:var(--bad)}",
+  ".nt{margin:0 0 6px}",
+  ".nt b{display:block;font-size:.85em;text-transform:uppercase;color:var(--muted);letter-spacing:.04em}",
+  "footer{margin-top:12px;padding-top:5px;border-top:1px solid var(--line);color:var(--muted);font-size:.85em}"];
+  return R.map(r=>p+r).join("\n")+`\n@media (max-width:640px){${p}.kp{grid-template-columns:1fr 1fr}${p}.two{grid-template-columns:1fr}}`;
+}
+function rptHtml(o){
+  return `<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Missouri outreach progress report ${todayISO()}</title>
+<style>
+@page{size:letter;margin:.5in}
+:root{--ink:#1b1f24;--muted:#5d6670;--line:#d9dde3;--accent:#2457d6;--chip:#f2f5fa;--panel:#fff;--warn:#a15c00;--bad:#b42318}
+*{box-sizing:border-box;-webkit-print-color-adjust:exact;print-color-adjust:exact}
+body{margin:0;background:#eef0f3;color:var(--ink);font:10px/1.42 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif}
+.tb{position:sticky;top:0;display:flex;gap:8px;align-items:center;padding:10px 16px;background:#1b1f24;color:#fff;font-size:13px}
+.tb button{font:inherit;padding:6px 12px;border-radius:6px;border:0;background:#6d93ff;color:#0d1117;font-weight:600;cursor:pointer}
+.pg{max-width:7.5in;margin:16px auto;background:#fff;padding:.45in;box-shadow:0 2px 10px rgba(0,0,0,.08)}
+@media print{body{background:#fff}.tb{display:none}.pg{margin:0;padding:0;box-shadow:none;max-width:none}}
+@media (max-width:640px){.pg{padding:16px}}
+${rptCss("")}
+</style></head><body>
+<div class="tb"><button id="pr">Print / Save as PDF</button><span>Letter size. In the print dialog choose "Save as PDF".</span></div>
+<div class="pg">${rptBody(o)}</div>
+<script>document.getElementById("pr").onclick=function(){window.print();};<\/script>
+</body></html>`;
+}
+function rptBody(o){
+  const {from,to}=o, t0=todayISO();
+  const span=(a,b)=>ts=>{if(!ts)return false;const t=new Date(ts);return t>=a&&t<=b;};
+  const inP=span(from,to), ever=span(new Date(0),to);
+  const of=(l,types)=>(l.activity||[]).filter(a=>types.includes(a.type));
+  const first=arr=>arr.map(a=>a.ts).sort()[0];
+  const stageTo=a=>{const x=/→ ([^:]+)/.exec(a.note||"");const s=x&&STAGES.find(s=>s.name===x[1].trim());return s?s.id:null;};
+  // Per-list activity in a time window
+  const per=(L,win)=>{const r={n:L.length,emails:0,emailed:0,newEmailed:0,calls:0,called:0,newCalled:0,talks:0,bounced:0,added:0,enter:{}};
+    L.forEach(l=>{
+      const em=of(l,["Email sent"]),cl=of(l,CALL_ACTS),emP=em.filter(a=>win(a.ts)),clP=cl.filter(a=>win(a.ts));
+      r.emails+=emP.length; if(emP.length){r.emailed++; if(win(first(em)))r.newEmailed++;}
+      r.calls+=clP.length; if(clP.length){r.called++; if(win(first(cl)))r.newCalled++;}
+      (l.activity||[]).filter(a=>win(a.ts)).forEach(a=>{
+        if(TALK_ACTS.includes(a.type)||(a.type==="Call"&&!String(a.note).startsWith(CALLS.unreach.name)))r.talks++;
+        if(a.type==="Email rejected")r.bounced++;
+        if(a.type==="Stage"){const s=stageTo(a);if(s)r.enter[s]=(r.enter[s]||0)+1;}});
+      if(win(l.createdAt))r.added++;});
+    return r;};
+  const lists=LISTS.map(([id,label])=>{const L=S.leads.filter(l=>(l.type||"principal")===id);return {id,label,L,p:per(L,inP)};}).filter(x=>x.L.length);
+  const sum=k=>lists.reduce((a,x)=>a+x.p[k],0), ent=s=>lists.reduce((a,x)=>a+(x.p.enter[s]||0),0);
+  const toDate=per(S.leads,ever);
+  const pct=(a,b)=>b?Math.round(a/b*100)+"%":"not yet measurable";
+  const N=v=>Number(v).toLocaleString();
+
+  // Principals: pipeline snapshot and onboarding
+  const P=S.leads.filter(isPr), pp=per(P,inP);
+  const cnt=s=>P.filter(l=>l.stage===s).length, reach=s=>P.filter(l=>MAIN.indexOf(l.stage)>=MAIN.indexOf(s)).length;
+  const contacted=P.filter(l=>l.stage!=="new").length;
+  const eng=P.filter(l=>l.stage==="engaged"), obTotal=eng.length+cnt("live")+cnt("active");
+  const fam=k=>{const v=P.map(l=>l.families?.[k]).filter(x=>x!==undefined&&x!==null&&x!=="");return v.length?{sum:v.reduce((a,b)=>a+ +b,0),n:v.length}:null;};
+  const sg=fam("signups"), ac=fam("activated");
+  const pending=P.filter(l=>l.stage!=="lost"&&callPending(l)).length;
+
+  // Districts in focus: the ones named in "focus", then the most-touched this period
+  const focus=String(o.focus||"").toLowerCase().split(/[,;]/).map(s=>s.trim()).filter(Boolean);
+  const dRows=[...new Set(P.map(l=>l.district||"(none)"))].map(d=>{const L=P.filter(l=>(l.district||"(none)")===d),r=per(L,inP);
+    return {d,n:L.length,emails:r.emails,calls:r.calls,touch:r.emails+r.calls,cont:L.filter(l=>l.stage!=="new").length,
+      eng:L.filter(l=>MAIN.indexOf(l.stage)>=2).length,su:L.reduce((a,l)=>a+(+l.families?.signups||0),0),f:focus.some(f=>d.toLowerCase().includes(f))};});
+  const topD=dRows.filter(x=>x.f||x.touch).sort((a,b)=>(b.f-a.f)||(b.touch-a.touch)||(b.eng-a.eng)).slice(0,8);
+  const regs=[...new Set(P.map(l=>l.region).filter(Boolean))].sort((a,b)=>String(a).localeCompare(String(b),undefined,{numeric:true}));
+  const rRows=regs.map(g=>{const L=P.filter(l=>l.region===g),r=per(L,inP);
+    return {g,n:L.length,cont:L.filter(l=>l.stage!=="new").length,eng:L.filter(l=>MAIN.indexOf(l.stage)>=2).length,touch:r.emails+r.calls,f:focus.some(f=>("region "+g).toLowerCase()===f||String(g).toLowerCase()===f)};});
+
+  // Calls by outcome (this period vs where every contact stands now)
+  const callP=k=>S.leads.reduce((a,l)=>a+of(l,["Call"]).filter(x=>inP(x.ts)&&String(x.note).startsWith(CALLS[k].name)).length,0);
+  const callNow=k=>S.leads.filter(l=>l.call?.status===k).length;
+
+  // Last 10 workdays: emails and calls per day (local dates)
+  const days=[];{const d=new Date();while(days.length<10){const w=d.getDay();if(w&&w<6)days.unshift(iso(d));d.setDate(d.getDate()-1);}}
+  const per10=Object.fromEntries(days.map(d=>[d,{e:0,c:0}]));
+  S.leads.forEach(l=>(l.activity||[]).forEach(a=>{const d=iso(new Date(a.ts));if(!per10[d])return;if(a.type==="Email sent")per10[d].e++;else if(CALL_ACTS.includes(a.type))per10[d].c++;}));
+  const mx=Math.max(1,...days.map(d=>per10[d].e+per10[d].c));
+
+  // Coming up before the next report (next 3 workdays) and overdue
+  const end=addBiz(3), open=S.leads.filter(l=>l.nextDue&&l.stage!=="lost");
+  const over=open.filter(l=>l.nextDue<t0).length, soonL=open.filter(l=>l.nextDue>=t0&&l.nextDue<=end);
+  const soon=Object.entries(soonL.reduce((a,l)=>{const k=l.nextAction||"(no next step)";a[k]=(a[k]||0)+1;return a;},{})).sort((a,b)=>b[1]-a[1]).slice(0,8);
+
+  // Data health (principals still in play)
+  const Pin=P.filter(l=>l.stage!=="lost");
+  const health=[["No email",Pin.filter(l=>!l.email).length],["No phone",Pin.filter(l=>!l.phone).length],["No sign-up link",Pin.filter(l=>!l.regLink).length],["No school name (district only)",Pin.filter(l=>!l.school).length],["Bounced / rejected email",cnt("rejected")]];
+
+  const fmtD=d=>d.toLocaleDateString("en-US",{weekday:"short",month:"short",day:"numeric"});
+  const fmtDT=d=>d.toLocaleString("en-US",{weekday:"short",month:"short",day:"numeric",year:"numeric",hour:"numeric",minute:"2-digit",timeZone:"America/New_York"})+" ET";
+  const wd=(()=>{let n=0;const d=new Date(from),e=new Date(to);d.setHours(12,0,0,0);e.setHours(12,0,0,0);while(d<=e){const w=d.getDay();if(w&&w<6)n++;d.setDate(d.getDate()+1);}return n;})();
+  const fromLbl=fmtD(from)+(from.getHours()||from.getMinutes()?" "+from.toLocaleTimeString("en-US",{hour:"numeric",minute:"2-digit"}):"");
+  const kpi=(l,v,s)=>`<div class="k"><div class="l">${l}</div><div class="v">${v}</div><div class="s">${s}</div></div>`;
+  const nl=s=>esc(s).replace(/\n/g,"<br>");
+  const sumLine=`Since ${fromLbl}: ${N(sum("emails"))} emails to ${N(sum("emailed"))} contacts (${N(sum("newEmailed"))} first touches), ${N(sum("calls"))} calls logged to ${N(sum("called"))} contacts (${N(sum("newCalled"))} called for the first time), ${N(sum("talks"))} conversations. ${N(ent("engaged"))} moved to Engaged, ${N(ent("live")+ent("active"))} to Live or Active. ${N(obTotal)} schools are in onboarding now. Family sign-ups: ${sg?N(sg.sum)+" from "+sg.n+" schools reporting":"not yet measurable"}.`;
+  const notes=[["Highlights",o.wins],["Blockers / help needed",o.blockers],["Next focus",o.next]].filter(x=>x[1]);
+
+  return `<div class="rh"><div><h1>Missouri Outreach · ${o.live?"Analytics":"Progress Report"}</h1><div class="m">CyberSafely.ai · Onboarding &amp; Activation · ${o.live?"Live view, updates as you work":"Lead Manager report #"+o.n}</div></div>
+ <div class="meta"><b>Period:</b> ${esc(fromLbl)} → ${esc(fmtD(to))} (${wd} workday${wd===1?"":"s"})<br>${o.live?"As of":"Prepared by "+esc(S.settings.sender)+" ·"} ${esc(fmtDT(to))}</div></div>
+<div class="sum">${esc(sumLine)}</div>
+
+<section><h2>This period</h2><div class="kp">
+ ${kpi("Emails sent",N(sum("emails")),`to ${N(sum("emailed"))} contacts · ${N(toDate.emails)} to date`)}
+ ${kpi("New contacts emailed",N(sum("newEmailed")),`first touch · ${N(toDate.emailed)} reached to date`)}
+ ${kpi("Calls logged",N(sum("calls")),`${N(sum("called"))} contacts · ${N(sum("newCalled"))} first calls`)}
+ ${kpi("Conversations",N(sum("talks")),"calls reached, replies, meetings, shared")}
+ ${kpi("Moved to Engaged",N(ent("engaged")),`${N(reach("engaged"))} schools Engaged or further now`)}
+ ${kpi("Moved to Live / Active",N(ent("live")+ent("active")),`${N(reach("live"))} schools with sign-ups now`)}
+ ${kpi("Schools in onboarding",N(obTotal),"Engaged + Live + Active, right now")}
+ ${kpi("Family sign-ups",sg?N(sg.sum):"—",sg?`from ${sg.n} schools reporting${ac?" · "+N(ac.sum)+" activated":""}`:"not yet measurable")}
+</div></section>
+
+<div class="two">
+<section><h2>School pipeline (principals, now)</h2>
+ <div class="stack">${STAGES.map(s=>{const c=cnt(s.id);return c?`<span style="width:${c/P.length*100}%;background:${RPT_C[s.id]}"></span>`:"";}).join("")}</div>
+ <table><thead><tr><th>Stage</th><th class="n">Schools</th><th class="n">Share</th><th class="n">Entered this period</th></tr></thead><tbody>
+ ${STAGES.map(s=>`<tr><td><span class="dot" style="background:${RPT_C[s.id]}"></span>${esc(s.name)}</td><td class="n">${N(cnt(s.id))}</td><td class="n">${P.length?Math.round(cnt(s.id)/P.length*100)+"%":"—"}</td><td class="n">${s.id==="new"?(pp.added?"+"+N(pp.added)+" added":""):pp.enter[s.id]?"+"+N(pp.enter[s.id]):""}</td></tr>`).join("")}
+ <tr class="tot"><td>Total</td><td class="n">${N(P.length)}</td><td class="n"></td><td class="n"></td></tr></tbody></table>
+ <p class="m" style="margin:5px 0 0">Contacted ${N(contacted)} of ${N(P.length)} (${pct(contacted,P.length)}). Engaged or further: ${pct(reach("engaged"),contacted)} of contacted. Live: ${pct(reach("live"),contacted)} of contacted.</p>
+</section>
+<section><h2>Onboarding (schools past first contact)</h2>
+ <table><thead><tr><th>Where they are</th><th class="n">Schools</th></tr></thead><tbody>
+ <tr><td>Engaged · waiting for the principal to forward</td><td class="n">${N(eng.filter(l=>!l.shared&&l.path!=="we").length)}</td></tr>
+ <tr><td>Engaged · shared with families, waiting for sign-ups</td><td class="n">${N(eng.filter(l=>l.shared&&l.path!=="we").length)}</td></tr>
+ <tr><td>Engaged · we send the family message</td><td class="n">${N(eng.filter(l=>l.path==="we").length)}</td></tr>
+ <tr><td>Live · first family sign-ups</td><td class="n">${N(cnt("live"))}</td></tr>
+ <tr><td>Active · ${esc(S.settings.activeTarget)}+ sign-ups (target to be agreed)</td><td class="n">${N(cnt("active"))}</td></tr>
+ <tr class="tot"><td>In onboarding</td><td class="n">${N(obTotal)}</td></tr></tbody></table>
+ <table style="margin-top:6px"><tbody>
+ <tr><td>Parent sign-ups (school codes)</td><td class="n">${sg?N(sg.sum):"not yet measurable"}</td></tr>
+ <tr><td>Activated (setup verified)</td><td class="n">${ac?N(ac.sum)+(sg?" · "+pct(ac.sum,sg.sum)+" of sign-ups":""):"not yet measurable"}</td></tr>
+ <tr><td>Call follow-up emails still to send</td><td class="n">${N(pending)}</td></tr>
+ <tr><td>Nurture (no reply after 3 touches) · Declined</td><td class="n">${N(cnt("nurture"))} · ${N(cnt("lost"))}</td></tr></tbody></table>
+</section></div>
+
+<section><h2>Districts in focus</h2>
+ ${focus.length?`<p class="m" style="margin:0 0 4px"><span class="star">★</span> Focus this period: ${esc(o.focus)}</p>`:""}
+ ${topD.length?`<table><thead><tr><th>District</th><th class="n">Schools</th><th class="n">Emails</th><th class="n">Calls</th><th class="n">Contacted</th><th class="n">Engaged+</th><th class="n">Sign-ups</th></tr></thead><tbody>
+ ${topD.map(x=>`<tr><td>${x.f?'<span class="star">★</span> ':""}${esc(x.d)}</td><td class="n">${N(x.n)}</td><td class="n">${N(x.emails)}</td><td class="n">${N(x.calls)}</td><td class="n">${N(x.cont)}</td><td class="n">${N(x.eng)}</td><td class="n">${x.su?N(x.su):"—"}</td></tr>`).join("")}</tbody></table>`:`<p class="m">No district activity in this period.</p>`}
+ <p class="m" style="margin:4px 0 0">Emails and calls are this period; the other columns are now. Coverage: ${N(dRows.filter(x=>x.touch).length)} districts worked this period · ${N(dRows.filter(x=>x.cont).length)} of ${N(dRows.length)} districts contacted to date.</p>
+ ${rRows.length?`<table style="margin-top:6px"><thead><tr><th>Region</th><th class="n">Schools</th><th class="n">Contacted</th><th class="n">Engaged+</th><th class="n">Touches this period</th></tr></thead><tbody>
+ ${rRows.map(x=>`<tr><td>${x.f?'<span class="star">★</span> ':""}Region ${esc(x.g)}</td><td class="n">${N(x.n)}</td><td class="n">${N(x.cont)}</td><td class="n">${N(x.eng)}</td><td class="n">${N(x.touch)}</td></tr>`).join("")}</tbody></table>`:""}
+</section>
+
+<div class="two">
+<section><h2>Call outcomes</h2>
+ <table><thead><tr><th>Outcome</th><th class="n">This period</th><th class="n">Now</th></tr></thead><tbody>
+ ${CALL_IDS.map(k=>`<tr><td>${esc(CALLS[k].name)}</td><td class="n">${N(callP(k))}</td><td class="n">${N(callNow(k))}</td></tr>`).join("")}
+ <tr><td>Want fundraising info</td><td class="n"></td><td class="n">${N(S.leads.filter(l=>l.call?.fundraising).length)}</td></tr></tbody></table>
+</section>
+<section><h2>Coming up (next 3 workdays)</h2>
+ ${soon.length?`<table><thead><tr><th>Next step</th><th class="n">Contacts</th></tr></thead><tbody>${soon.map(([k,v])=>`<tr><td>${esc(k)}</td><td class="n">${N(v)}</td></tr>`).join("")}</tbody></table>`:`<p class="m">Nothing scheduled.</p>`}
+ <p class="m" style="margin:4px 0 0">${over?`<b class="bad">${N(over)} overdue</b> today.`:"Nothing overdue."}</p>
+</section></div>
+
+<div class="two">
+<section><h2>Activity, last 10 workdays</h2>
+ <div class="leg"><span><span class="dot" style="background:#2457d6"></span>Emails</span><span><span class="dot" style="background:#8b6cf0"></span>Calls</span></div>
+ ${days.map(d=>{const v=per10[d];return `<div class="br"><span>${esc(fmtD(new Date(d+"T12:00")))}</span><div class="t"><span style="width:${v.e/mx*100}%;background:#2457d6"></span><span style="width:${v.c/mx*100}%;background:#8b6cf0"></span></div><span class="n">${v.e+v.c}</span></div>`;}).join("")}
+</section>
+<section><h2>System overview (all lists)</h2>
+ <table><thead><tr><th>List</th><th class="n">Records</th><th class="n">Cold</th><th class="n">In outreach</th><th class="n">Engaged+</th><th class="n">Closed</th><th class="n">Emails*</th><th class="n">Calls*</th></tr></thead><tbody>
+ ${lists.map(x=>{const c=s=>x.L.filter(l=>s.includes(l.stage)).length;return `<tr><td>${esc(x.label)}</td><td class="n">${N(x.L.length)}</td><td class="n">${N(c(["new"]))}</td><td class="n">${N(c(["contacted","rejected"]))}</td><td class="n">${N(c(["engaged","live","active"]))}</td><td class="n">${N(c(["nurture","lost"]))}</td><td class="n">${N(x.p.emails)}</td><td class="n">${N(x.p.calls)}</td></tr>`;}).join("")}
+ <tr class="tot"><td>Total</td><td class="n">${N(S.leads.length)}</td><td colspan="4"></td><td class="n">${N(sum("emails"))}</td><td class="n">${N(sum("calls"))}</td></tr></tbody></table>
+ <p class="m" style="margin:2px 0 6px">* this period</p>
+ <table><thead><tr><th>Data health (principals in play)</th><th class="n">Schools</th></tr></thead><tbody>${health.map(([k,v])=>`<tr><td>${k}</td><td class="n">${N(v)}</td></tr>`).join("")}</tbody></table>
+</section></div>
+
+${notes.length?`<section><h2>Notes</h2>${notes.map(([k,v])=>`<p class="nt"><b>${k}</b>${nl(v)}</p>`).join("")}</section>`:""}
+
+<footer>Counts only: no names, emails or phone numbers. Source: CyberSafely Lead Manager (browser data on the sender's computer); HubSpot remains the system of record. "Not yet measurable" means no data has been entered yet, not zero. A call that is also logged as a voicemail counts twice under "calls logged".</footer>`;
+}
+
+/* ---------- Analytics ---------- */
+// The progress report, live in the app, for any period. Same numbers and layout as the exported PDF.
+let anaP="today", anaFrom="";
+function anaRange(){
+  const d0=new Date();d0.setHours(0,0,0,0);
+  if(anaP==="today")return d0;
+  if(anaP==="report")return rptDefaultFrom();
+  if(anaP==="week"){d0.setDate(d0.getDate()-((d0.getDay()+6)%7));return d0;}
+  if(anaP==="7")return new Date(d0.getTime()-6*864e5);
+  if(anaP==="30")return new Date(d0.getTime()-29*864e5);
+  if(anaP==="all")return new Date(S.leads.flatMap(l=>[l.createdAt,...(l.activity||[]).map(a=>a.ts)]).filter(Boolean).reduce((a,t)=>Math.min(a,new Date(t).getTime()),d0.getTime()));
+  return anaFrom?new Date(anaFrom):d0;
+}
+function vStats(m){
+  const r=rptSet(), P=[["today","Today"],["report","Since last report"],["week","This week"],["7","Last 7 days"],["30","Last 30 days"],["all","Contract to date"],["custom","Custom…"]];
+  const from=anaRange();
+  m.innerHTML=`<div class="row" style="margin-bottom:12px">
+   <div class="ds" id="anaP">${P.map(([k,v])=>`<button data-p="${k}" class="${anaP===k?"on":""}">${v}</button>`).join("")}</div>
+   ${anaP==="custom"?`<input type="datetime-local" id="anaFrom" value="${dtLocal(from)}">`:""}
+   <input id="anaFocus" placeholder="District / region in focus" value="${esc(r.focus)}" style="min-width:220px">
+   <span class="grow"></span><button class="b sm" id="anaRef">Refresh</button><button class="b sm p" id="anaExp">Export this period</button></div>
+  <div class="card rpt">${rptBody({from,to:new Date(),...r,live:true})}</div>
+  <p class="small muted">Counts only, all lists. Same numbers as the exported progress report. Notes come from Dashboard → Progress report.</p>`;
+  m.querySelectorAll("[data-p]").forEach(b=>b.onclick=()=>{anaP=b.dataset.p; if(anaP==="custom"&&!anaFrom)anaFrom=dtLocal(from); vStats(m);});
+  const f=$("#anaFrom"); if(f)f.onchange=()=>{anaFrom=f.value;vStats(m);};
+  $("#anaFocus").onchange=e=>{r.focus=e.target.value.trim();save();vStats(m);};
+  $("#anaRef").onclick=()=>vStats(m);
+  $("#anaExp").onclick=()=>{const to=new Date(), html=rptHtml({from,to,...r,n:(r.log||[]).length+1}), url=URL.createObjectURL(new Blob([html],{type:"text/html"}));
+    if(!window.open(url,"_blank"))dl(`progress-report-${todayISO()}.html`,html,"text/html"); setTimeout(()=>URL.revokeObjectURL(url),120000);
+    r.log=[...(r.log||[]),to.toISOString()].slice(-60); save();};
+}
+document.head.insertAdjacentHTML("beforeend",`<style>.rpt{font-size:13px;line-height:1.45}\n${rptCss(".rpt ")}</style>`);
+
+/* ---------- Data ---------- */
+function vData(m){
+  const w=W();
+  m.innerHTML=`<div class="banner"><b>Working on: ${ds==="user"?"App users (retention)":ds==="pta"?"PTA contacts":ds==="campaign"?"Campaigns (newsletter contacts)":ds==="overseer"?"District overseers":"Principals"}.</b> Import, export and reset below apply to this list only. Switch lists at the top of the page.</div>
+  <div class="banner warn">School data lives <b>only in this browser</b> on this computer. Nothing is uploaded. Back up weekly, and keep CSV and backup files <b>outside the Obsidian vault</b> (they contain names and emails).</div>
+  <div class="grid" style="grid-template-columns:repeat(auto-fit,minmax(300px,1fr))">
+  <div class="card"><h2 style="margin-top:0">Import ${ds==="user"?"users":ds==="pta"?"PTA contacts":ds==="campaign"?"a newsletter list":ds==="overseer"?"overseers":"principals"} (CSV)</h2>
+   ${ds==="campaign"?`<p class="small">From HubSpot: the email's recipients who opened or clicked → Export → CSV. Columns used: <code>First Name</code> <code>Last Name</code> (or <code>Name</code>) <code>Email</code>, and if present <code>Phone Number</code> <code>Company</code> <code>State/Region</code> <code>Job Title</code>. Someone already in Campaigns gets the new campaign added, not a duplicate.</p>
+   <div class="row" style="margin-bottom:8px"><label class="small muted">Campaign name</label><input id="campName" class="grow" placeholder="e.g. Sept 2026 newsletter (opened)"></div>`:""}
+   ${ds==="user"?`<p class="small">Columns: <code>Name</code> <code>Email</code>. Run <code>python3 .claude/scripts/clean-users.py users.csv</code> first and import <code>users-import.csv</code>. Rows with only an email are kept (name left blank); a person's name is split into first and last. Re-importing matches by email, so there are no duplicates.</p>`:""}
+   ${ds==="pta"?`<p class="small">Columns: <code>Name</code> <code>Email</code>. A title line above the header is skipped. Names that look like an organization (PTA, PTO, PTSA, council…) go in the organization field; a person's name is split into first and last. Re-importing matches by email, so there are no duplicates.</p>`:""}
+   ${ds==="overseer"?`<p class="small">Columns: <code>District ID</code> <code>District</code> <code>First Name</code> <code>Last Name</code> <code>Email</code> <code>Phone Number</code> <code>Job Title</code>. Overseers link to principals by District ID (or matching district name).</p>`:""}
+   ${ds==="pta"||ds==="user"?"":`<p class="small muted">In HubSpot: Contacts → your Missouri view → Export → CSV. Columns are matched automatically (First Name, Last Name, Email, Phone Number, Job Title, School, Primary/Associated Company, Contact owner, Record ID, Notes). Re-importing updates schools by Record ID, email, or name + company, and keeps stages and history.</p>`}
+   <input type="file" id="csv" accept=".csv,text/csv"><div id="csvOut" class="small" style="margin-top:8px"></div></div>
+  <div class="card"><h2 style="margin-top:0">Export</h2>
+   <p class="small muted">CSV for HubSpot re-import or a status share. Includes Record ID and email so HubSpot can match rows.</p>
+   <div class="row"><button class="b" id="expCsv">Export CSV</button><button class="b" id="expAgg">Export counts only (no PII)</button></div>
+   <p class="small muted" style="margin-bottom:4px">Progress report for Torino: 1–2 page PDF, counts only, all lists.</p>
+   <button class="b p" onclick="view='dash';render();$('#rpt')?.scrollIntoView()">Progress report…</button></div>
+  <div class="card"><h2 style="margin-top:0">Import activity log (CSV)</h2>
+   <p class="small muted">Log past emails and calls in bulk. Columns: <code>Name</code> or <code>Email</code>, <code>Action</code>, <code>Date</code> (YYYY-MM-DD), <code>Note</code>. Action is an email ID (e1, e1c, e2, f3…) or <code>voicemail</code>. Name <code>*</code> means everyone in this list not named elsewhere in the file. Rows already logged on the same date are skipped, so re-importing is safe. A backup downloads first.</p>
+   <input type="file" id="actCsv" accept=".csv,text/csv"><div id="actOut" class="small" style="margin-top:8px"></div></div>
+  <div class="card"><h2 style="margin-top:0">Back up / restore</h2>
+   <p class="small muted">Full copy of schools, history and emails as JSON.</p>
+   <div class="row"><button class="b" id="bk">Back up</button><label class="b">Restore<input type="file" id="rs" accept=".json" class="hide"></label></div></div>
+  <div class="card"><h2 style="margin-top:0">Reset</h2>
+   <p class="small muted"><b>Start fresh:</b> keep every school and contact, but set them all back to Cold and clear call outcomes, call notes, emails logged, history and sign-up counts. A backup downloads first.</p>
+   <button class="b" id="coldAll">Reset all ${w.many} to Cold</button>
+   <p class="small muted" style="margin-top:12px">Delete every ${w.one} in this list from this browser.</p><button class="b d" id="wipe">Delete all ${w.many}</button></div>
+  </div>`;
+  $("#csv").onchange=e=>{const f=e.target.files[0];if(!f)return;
+    const camp=ds==="campaign"?($("#campName").value||"").trim():"";
+    if(ds==="campaign"&&!camp){alert("Give this list a campaign name first, e.g. \"Sept 2026 newsletter (opened)\".");e.target.value="";return;}
+    f.text().then(t=>{$("#csvOut").textContent=importCsv(t,camp);render();});};
+  $("#actCsv").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{
+    dl(`outreach-backup-before-log-${todayISO()}.json`,JSON.stringify(S,null,1),"application/json");
+    $("#actOut").innerHTML=applyActivityLog(t);render();});};
+  $("#expCsv").onclick=()=>dl(`missouri-schools-${todayISO()}.csv`,toCsv(),"text/csv");
+  $("#expAgg").onclick=()=>dl(`missouri-schools-counts-${todayISO()}.csv`,aggCsv(),"text/csv");
+  $("#bk").onclick=()=>dl(`outreach-backup-${todayISO()}.json`,JSON.stringify(S,null,1),"application/json");
+  $("#rs").onchange=e=>{const f=e.target.files[0];if(!f)return;f.text().then(t=>{try{const d=JSON.parse(t);if(!Array.isArray(d.leads))throw 0;if(confirm(`Replace current data with backup (${d.leads.length} schools)?`)){localStorage.setItem(KEY,JSON.stringify(d));S=load();save();render();}}catch(_){alert("That file isn't a valid backup.");}});};
+  $("#coldAll").onclick=()=>{
+    if(!confirm(`Reset all ${DL().length} ${W().many} to Cold? Contacts stay; outcomes, notes, emails logged, history and sign-ups are cleared. A backup will download first.`))return;
+    dl(`outreach-backup-before-reset-${todayISO()}.json`,JSON.stringify(S,null,1),"application/json");
+    DL().forEach(l=>{l.stage="new";l.seq=0;l.sent=[];l.path="";l.shared=false;l.families={};delete l.call;
+      l.activity=[];log(l,"Note","Reset to Cold (fresh start)");setNext(l);});
+    save();render();};
+  $("#wipe").onclick=()=>{if(confirm(`Delete ALL ${W().many} from this browser? Back up first if unsure.`)&&confirm("Really delete them?")){S.leads=S.leads.filter(l=>!inDs(l));save();render();}};
+}
+function lev(a,b){const m=a.length,n=b.length,d=[...Array(n+1).keys()];for(let i=1;i<=m;i++){let p=d[0];d[0]=i;for(let j=1;j<=n;j++){const t=d[j];d[j]=Math.min(d[j]+1,d[j-1]+1,p+(a[i-1]===b[j-1]?0:1));p=t;}}return d[n];}
+function applyActivityLog(text){
+  const rows=parseCsv(text.replace(/^\uFEFF/,"")); if(rows.length<2)return "No rows found.";
+  const H=rows[0].map(h=>h.trim().toLowerCase()), ix=k=>H.indexOf(k);
+  if(ix("action")<0||(ix("name")<0&&ix("email")<0))return "Need an Action column and a Name or Email column.";
+  const pool=DL(), nn=s=>String(s||"").toLowerCase().replace(/[^a-z]/g,"");
+  const find=(nm,em)=>{
+    if(em){const e=pool.find(l=>(l.email||"").toLowerCase()===em.toLowerCase());if(e)return e;}
+    if(!nm)return null; const k=nn(nm);
+    const exact=pool.filter(l=>nn(name(l))===k); if(exact.length===1)return exact[0];
+    const near=pool.map(l=>[l,lev(nn(name(l)),k)]).filter(x=>x[1]<=2).sort((a,b)=>a[1]-b[1]);
+    return near.length&&(near.length===1||near[0][1]<near[1][1])?near[0][0]:null;};
+  const recs=rows.slice(1).map(r=>{const g=k=>ix(k)>=0?(r[ix(k)]||"").trim():"";return {nm:g("name"),em:g("email"),act:g("action").toLowerCase(),date:g("date"),note:g("note")};}).filter(x=>x.act);
+  const named=new Set(), missing=[];
+  recs.forEach(x=>{if(x.nm==="*")return; x.l=find(x.nm,x.em); if(x.l)named.add(x.l.id); else missing.push(x.nm||x.em);});
+  let done=0, skipped=0; const bad=new Set(), touched=new Set();
+  const apply=(l,x)=>{
+    const t=x.act==="voicemail"?null:tpl(x.act); if(x.act!=="voicemail"&&!t){bad.add(x.act);return;}
+    const type=t?"Email sent":"Call", nm=t?t.name:CALLS.unreach.name;
+    if((l.activity||[]).some(a=>a.type===type&&(t?a.note===nm:a.note.startsWith(nm))&&a.ts.slice(0,10)===x.date)){skipped++;return;}
+    BASE=/^\d{4}-\d{2}-\d{2}$/.test(x.date)?x.date:null;
+    try{ if(t)logSent(l,t.id); else setCall(l,"unreach",x.note); } finally{BASE=null;}
+    done++; touched.add(l.id);};
+  recs.forEach(x=>{ if(x.nm==="*")pool.filter(l=>!named.has(l.id)).forEach(l=>apply(l,x)); else if(x.l)apply(x.l,x); });
+  save();
+  return `Logged ${done} actions for ${touched.size} ${W().many}.`+(skipped?` Skipped ${skipped} already logged.`:"")+
+    (missing.length?`<div class="over">No match for: ${[...new Set(missing)].map(esc).join(", ")}. Check the spelling against the Schools list.</div>`:"")+
+    (bad.size?`<div class="over">Unknown email IDs: ${[...bad].map(esc).join(", ")}.</div>`:"");
+}
+function parseCsv(t){
+  const rows=[];let r=[],f="",q=false;
+  for(let i=0;i<t.length;i++){const c=t[i];
+    if(q){if(c==='"'){if(t[i+1]==='"'){f+='"';i++;}else q=false;}else f+=c;}
+    else if(c==='"')q=true; else if(c===","){r.push(f);f="";} else if(c==="\n"){r.push(f);rows.push(r);r=[];f="";} else if(c!=="\r")f+=c;}
+  if(f||r.length){r.push(f);rows.push(r);} return rows.filter(x=>x.some(v=>v.trim()));
+}
+function importCsv(text,camp){
+  let rows=parseCsv(text.replace(/^﻿/,""));
+  // Skip a title line above the header (e.g. "PTA DATASET,")
+  const hi=rows.slice(0,5).findIndex(r=>r.some(c=>/^(e-?mail|name|full name|first ?name|record id|contact id)$/i.test(c.trim())));
+  if(hi>0)rows=rows.slice(hi);
+  if(rows.length<2)return "No rows found.";
+  const H=rows[0].map(h=>h.trim().toLowerCase());
+  const col=(...names)=>{for(const n of names){const i=H.indexOf(n);if(i>=0)return i;}for(const n of names){const i=H.findIndex(h=>h.includes(n));if(i>=0)return i;}return -1;};
+  const ex=(...names)=>{for(const n of names){const i=H.indexOf(n);if(i>=0)return i;}return -1;};
+  const C={hubspotId:col("record id","contact id","hs_object_id"),first:col("first name","firstname"),last:col("last name","lastname"),email:col("email"),
+    phone:col("phone number","phone"),jobtitle:col("job title","jobtitle"),school:col("school"),
+    // "Company" in HubSpot exports is MSBA (the list source), so the associated company wins
+    districtId:col("district id","districtid"),
+    district:[(()=>{const i=H.indexOf("district");return i>=0?i:H.findIndex(h=>h.includes("district")&&!h.includes("id"));})(),col("associated company"),col("primary company"),col("company name"),col("company")].find(i=>i>=0)??-1,owner:col("contact owner","owner"),notes:col("notes"),
+    full:(()=>{const i=H.indexOf("name");return i>=0?i:H.indexOf("full name");})(),state:col("state/region","state"),
+    // From the cleaned Notion school list (exact header match only, so HubSpot's "State/Region" isn't read as Region)
+    code:ex("referral code","promo code"),regLink:ex("sign-up link","signup link","registration link"),
+    level:ex("level"),grades:ex("grades"),city:ex("city"),region:ex("region"),assigned:ex("assigned")};
+  if(C.email<0&&C.first<0&&C.full<0)return "Couldn't find Email or First Name columns. Check the export.";
+  let add=0,upd=0,skip=0;
+  const low=s=>(s||"").toLowerCase();
+  for(const r of rows.slice(1)){
+    const g=k=>C[k]>=0?(r[C[k]]||"").trim():"";
+    const rec={hubspotId:g("hubspotId"),first:g("first"),last:g("last"),email:g("email").toLowerCase(),phone:g("phone"),jobtitle:g("jobtitle"),school:g("school"),district:g("district"),owner:g("owner"),notes:g("notes"),districtId:g("districtId"),state:g("state"),
+      code:g("code"),regLink:g("regLink"),level:g("level"),grades:g("grades"),city:g("city"),region:g("region"),assigned:g("assigned")};
+    // PTA and Users: an organization name ("Woodbury PTO") goes in school; a name that's just the email is dropped
+    if((ds==="pta"||ds==="user")&&!rec.first&&!rec.last&&g("full")){const f=g("full");
+      if(f.includes("@")||f.toLowerCase()===rec.email);else if(/\b(pta|pto|ptsa|ptc|ptg|ptso|association|council|school|office|board|parents?|foundation|booster)s?\b/i.test(f)){if(!rec.school)rec.school=f;}
+      else{const p=f.split(/\s+/);rec.first=p.shift();rec.last=p.join(" ");}}
+    if(!rec.first&&!rec.last&&ds!=="pta"&&ds!=="user"&&g("full")){const p=g("full").split(/\s+/);rec.first=p.shift();rec.last=p.join(" ");}
+    if(/#VALUE!/.test(rec.first+rec.last)){rec.first="";rec.last="";rec.notes=rec.notes||"⚠️ Name was #VALUE! in HubSpot. Fix the record there.";}
+    if(!rec.email&&!rec.first&&!rec.last){skip++;continue;}
+    const pool=DL();
+    const ex=pool.find(l=>(rec.hubspotId&&l.hubspotId===rec.hubspotId)||(rec.email&&l.email===rec.email))
+      ||(rec.first&&pool.find(l=>low(l.first)===low(rec.first)&&low(l.last)===low(rec.last)&&low(l.district)===low(rec.district)));
+    if(camp)rec.campaign=ex?[...new Set([...campsOf(ex),camp])].join(", "):camp;
+    if(ex){for(const k of Object.keys(rec))if(rec[k]&&k!=="notes")ex[k]=rec[k]; if(rec.notes&&!ex.notes)ex.notes=rec.notes; upd++;}
+    else{const l={id:uid(),...rec,...(ds!=="principal"?{type:ds}:{}),stage:"new",seq:0,sent:[],path:"",activity:[],families:{},createdAt:new Date().toISOString()};setNext(l);S.leads.push(l);add++;}
+  }
+  save();
+  const P=DL(), unowned=P.filter(l=>!l.owner).length, noEmail=P.filter(l=>!l.email).length, noSchool=ds!=="principal"?0:P.filter(l=>!l.school).length;
+  return `Added ${add}, updated ${upd}, skipped ${skip} empty rows.`+(unowned?` ${unowned} have no HubSpot owner.`:"")+(noEmail?` ${noEmail} have no email.`:"")+
+    (noSchool?` ${noSchool} have no school name (only the district). Emails will say the district until you add it.`:"");
+}
+function csvCell(v){v=String(v??"");return /[",\n]/.test(v)?'"'+v.replace(/"/g,'""')+'"':v;}
+function toCsv(){
+  const h=["Record ID","Email","Phone Number","First Name","Last Name","Job Title","School","District","HubSpot Owner","Stage","Outreach Touches","Shared With Families","Who Sends","Next Step","Next Due","Touches","Last Touch","Referral Code","Sign-up Link","Parent Signups","Activated","Counts As Of","Call Outcome","Call Date","Caller","Call Note","Wants Fundraising Info","Campaigns","State","District ID"];
+  return [h,...DL().map(l=>[l.hubspotId,l.email,fmtPhone(l.phone),l.first,l.last,l.jobtitle,l.school,l.district,l.owner,STAGE[l.stage].name,l.seq||0,l.shared?"yes":"",l.path==="we"?"We send":"School forwards",l.nextAction,l.nextDue,touches(l),lastTouch(l),l.code,l.regLink,l.families?.signups,l.families?.activated,l.families?.asOf,CALLS[l.call?.status]?.name||"",l.call?.status&&l.call.ts?l.call.ts.slice(0,10):"",l.call?.by||"",l.call?.note||"",l.call?.fundraising?"yes":"",l.campaign||"",l.state||"",l.districtId||""])].map(r=>r.map(csvCell).join(",")).join("\n");
+}
+function aggCsv(){
+  const ds=[...new Set(DL().map(l=>l.district||"(none)"))].sort();
+  const h=["District","Schools",...STAGES.map(s=>s.name),"Parent signups","Activated"];
+  const rows=ds.map(d=>{const L=DL().filter(l=>(l.district||"(none)")===d);const sum=k=>{const v=L.map(l=>l.families?.[k]).filter(x=>x!==undefined&&x!=="");return v.length?v.reduce((a,b)=>a+ +b,0):"not yet measurable";};
+    return [d,L.length,...STAGES.map(s=>L.filter(l=>l.stage===s.id).length),sum("signups"),sum("activated")];});
+  return [h,...rows].map(r=>r.map(csvCell).join(",")).join("\n");
+}
+function dl(name,content,type){const a=document.createElement("a");a.href=URL.createObjectURL(new Blob([content],{type}));a.download=name;a.click();setTimeout(()=>URL.revokeObjectURL(a.href),1000);}
+
+/* ---------- Process ---------- */
+function vHelp(m){
+  const flow=ids=>`<div class="flow">${ids.map(i=>`<span class="s">${esc(i)}</span>`).join(" → ")}</div>`;
+  m.innerHTML=`<div class="card" style="max-width:820px">
+  <h2 style="margin-top:0">From a cold school to enrolled parents</h2>
+  <p>Schools are the channel: the principal forwards one message, and parents sign up with the school's link. The principal's only job is to forward it. Success is measured by sign-ups, not replies.</p>
+  ${MAIN.map(s=>`<div class="row" style="margin:6px 0"><span class="dot" style="--c:${cv(s)}"></span><b style="min-width:90px">${STAGE[s].name}</b><span class="muted">${esc(STAGE[s].desc)}</span></div>`).join("")}
+  <h3>Outreach: 3 touches, then Nurture</h3>
+  ${flow(["Day 0 · E1 email + family message","Day 4 · call → voicemail + E2","Day 10 · E3 right person?","no reply → Nurture"])}
+  <p class="small">A reply, a call or "we shared it" moves the school to <b>Engaged</b> and stops the sequence. "No thanks" → R2, and the school is closed.</p>
+  <h3>After Engaged</h3>
+  ${flow(["School forwards the family message","enter sign-ups from the dashboard","Live → G2 thank-you + reminder","Active → G3 monthly"])}
+  <p class="small">No sign-ups after about 8 workdays → G1 nudge. If a school wants us to send it, use R3 (the exception).</p>
+  <h3>The parent's side</h3>
+  ${flow(["Gets the school's message","signs up on the web with the school link","adds child + sets up the device","onboarding call or video","Zoey and Alyssa's 90-day activation sequence"])}
+  <h3>Calls: principals who opened the emails</h3>
+  ${flow(["Call (script C1)","pick the outcome in Calls","next workday: follow-up email (F1 / F2 / F3 / R2)"])}
+  <p class="small">Interested → Engaged + F1 (who sends to families?). Needs info → Engaged + F2. Follow-up needed → F2, call back later. Unable to reach → voicemail + F3. Not interested → Declined + R2. Log each outcome in HubSpot too.</p>
+  <h2>Starting a cold batch</h2>
+  <ol><li>Fill in each school's <b>name</b>, <b>sign-up link</b> and any missing emails.</li><li>Fill in <b>Emails → Settings</b>: phone, onboarding page, support contact.</li><li>Click <b>Cold</b> in the strip → <b>Bulk email</b> → E1.</li><li>Send, then <b>Log as sent</b>. Calls come due on day 4 in <b>Today</b>.</li></ol>
+  <h2>Rules</h2>
+  <ul><li>No student or family details in notes. If a principal raises a specific child, pass it to Torino the same day.</li>
+  <li>"No thanks" is final.</li>
+  <li>HubSpot is the company's system of record. Sync weekly with Export CSV.</li></ul></div>`;
+}
+
+/* ---------- global search ---------- */
+function gsSearch(q){
+  q=q.trim().toLowerCase(); if(!q)return [];
+  const qd=q.replace(/\D/g,"");
+  return S.leads.filter(l=>{
+    const hay=[name(l),l.school,l.district,l.email,l.notes,l.city,l.campaign,l.jobtitle,l.assigned].filter(Boolean).join(" ").toLowerCase();
+    if(hay.includes(q))return true;
+    if(qd&&qd.length>=3&&digits(l.phone).includes(qd))return true;
+    return false;
+  }).slice(0,20);
+}
+function gsRender(items,sel){
+  const r=$("#gsr");
+  if(!items.length){r.innerHTML=`<div class="gs-empty">No matches.</div>`;r.classList.add("open");return;}
+  r.innerHTML=items.map((l,i)=>{
+    const t=l.type||"principal";
+    const line2=[schoolOf(l),l.district&&l.district!==l.school?l.district:""].filter(Boolean).join(" · ");
+    const line3=[l.email,l.phone].filter(Boolean).join(" · ");
+    return `<button data-id="${l.id}" data-ds="${t}" class="${i===sel?"sel":""}"><div><b>${esc(name(l))}</b> <span class="gs-badge">${t}</span></div>${line2?`<div class="small muted">${esc(line2)}</div>`:""}${line3?`<div class="small">${esc(line3)}</div>`:""}</button>`;
+  }).join("");
+  r.classList.add("open");
+}
+function gsJump(id,targetDs){
+  if(targetDs!==ds){setDs(targetDs);document.querySelectorAll("#dsSwitch button").forEach(b=>b.classList.toggle("on",b.dataset.ds===ds));}
+  view="leads"; render(); openLead(id);
+  $("#gs").value=""; $("#gsr").classList.remove("open");
+}
+(function(){
+  let sel=0, items=[];
+  const inp=$("#gs"), r=$("#gsr");
+  inp.addEventListener("input",()=>{items=gsSearch(inp.value);sel=0;if(!inp.value.trim()){r.classList.remove("open");return;}gsRender(items,sel);});
+  inp.addEventListener("focus",()=>{if(inp.value.trim()){items=gsSearch(inp.value);gsRender(items,sel);}});
+  inp.addEventListener("keydown",e=>{
+    if(e.key==="ArrowDown"){e.preventDefault();if(items.length){sel=(sel+1)%items.length;gsRender(items,sel);}}
+    else if(e.key==="ArrowUp"){e.preventDefault();if(items.length){sel=(sel-1+items.length)%items.length;gsRender(items,sel);}}
+    else if(e.key==="Enter"){const it=items[sel];if(it){e.preventDefault();gsJump(it.id,it.type||"principal");}}
+    else if(e.key==="Escape"){r.classList.remove("open");inp.blur();}
+  });
+  r.addEventListener("click",e=>{const b=e.target.closest("button[data-id]");if(b)gsJump(b.dataset.id,b.dataset.ds);});
+  document.addEventListener("click",e=>{if(!e.target.closest(".gs"))r.classList.remove("open");});
+})();
+
+document.addEventListener("keydown",e=>{if(e.key==="Escape"&&$("#drawer").classList.contains("open"))closeDrawer();});
+tick(); render();
+if(S.savedAt)$("#savedAt").textContent="Last saved "+new Date(S.savedAt).toLocaleString();
+</script>
+</body>
+</html>

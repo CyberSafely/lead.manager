@@ -1,0 +1,21 @@
+node_modules/
+dist/
+dist-cloud/
+# Real contact data never goes in this repo
+*.csv
+*.xlsx
+*.json.bak
+outreach-backup-*.json
+progress-report-*.html
+.env
+.env.*
+!package.json
+!package-lock.json
+!tsconfig.json
+scripts/known-wrong-contacts.txt
+!tests/e2e/fixtures/*.csv
+__pycache__/
+.claude/settings.local.json
+!.env.cloud.example
+*.local.sh
+*.local.ts

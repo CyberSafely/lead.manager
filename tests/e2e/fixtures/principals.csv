@@ -1,0 +1,41 @@
+District ID,First Name,Last Name,Email,Phone Number,Job Title,School,District,Contact Owner,Notes,Sign-up Link,Level,Grades,City,Region
+100001,Pat,Example0,,,Principal,,Springfield R-XII,,Test note,,Middle,06-08,Town 0,1
+100002,Sam,Sample1,sam.sample1@example.org,555-0101-1001,Asst Principal,Example Middle 1,Saint Louis Public Schools,Giancarlo,,https://example.org/s/1,Junior High,05-08,Town 1,2
+100003,Alex,Tester2,alex.tester2@example.org,555-0102-1002,Principal,Example Middle 2,Columbia 93,Giancarlo,,,Middle,07-09,Town 2,3
+100004,Jordan,Demo3,jordan.demo3@example.org,555-0103-1003,Asst Principal,Example Middle 3,Joplin Schools,,,https://example.org/s/3,Junior High,06-08,Town 3,1
+100001,Casey,Placeholder4,casey.placeholder4@example.org,555-0104-1004,Principal,Example Middle 4,Springfield R-XII,Giancarlo,Test note,,Middle,05-08,Town 4,2
+100002,Riley,Mock5,riley.mock5@example.org,,Asst Principal,Example Middle 5,Saint Louis Public Schools,Giancarlo,,https://example.org/s/5,Junior High,07-09,Town 0,3
+100003,Morgan,Fake6,morgan.fake6@example.org,555-0106-1006,Principal,Example Middle 6,Columbia 93,,,,Middle,06-08,Town 1,1
+100004,Taylor,Dummy7,taylor.dummy7@example.org,555-0107-1007,Asst Principal,,Joplin Schools,Giancarlo,,https://example.org/s/7,Junior High,05-08,Town 2,2
+100001,Jamie,Example8,jamie.example8@example.org,555-0108-1008,Principal,Example Middle 8,Springfield R-XII,Giancarlo,Test note,,Middle,07-09,Town 3,3
+100002,Drew,Sample9,,555-0109-1009,Asst Principal,Example Middle 9,Saint Louis Public Schools,,,https://example.org/s/9,Junior High,06-08,Town 4,1
+100003,Quinn,Tester10,quinn.tester10@example.org,,Principal,Example Middle 10,Columbia 93,Giancarlo,,,Middle,05-08,Town 0,2
+100004,Avery,Demo11,avery.demo11@example.org,555-0111-1011,Asst Principal,Example Middle 11,Joplin Schools,Giancarlo,,https://example.org/s/11,Junior High,07-09,Town 1,3
+100001,Pat,Placeholder12,pat.placeholder12@example.org,555-0112-1012,Principal,Example Middle 12,Springfield R-XII,,Test note,,Middle,06-08,Town 2,1
+100002,Sam,Mock13,sam.mock13@example.org,555-0113-1013,Asst Principal,Example Middle 13,Saint Louis Public Schools,Giancarlo,,https://example.org/s/13,Junior High,05-08,Town 3,2
+100003,Alex,Fake14,alex.fake14@example.org,555-0114-1014,Principal,,Columbia 93,Giancarlo,,,Middle,07-09,Town 4,3
+100004,Jordan,Dummy15,jordan.dummy15@example.org,,Asst Principal,Example Middle 15,Joplin Schools,,,https://example.org/s/15,Junior High,06-08,Town 0,1
+100001,Casey,Example16,casey.example16@example.org,555-0116-1016,Principal,Example Middle 16,Springfield R-XII,Giancarlo,Test note,,Middle,05-08,Town 1,2
+100002,Riley,Sample17,riley.sample17@example.org,555-0117-1017,Asst Principal,Example Middle 17,Saint Louis Public Schools,Giancarlo,,https://example.org/s/17,Junior High,07-09,Town 2,3
+100003,Morgan,Tester18,,555-0118-1018,Principal,Example Middle 18,Columbia 93,,,,Middle,06-08,Town 3,1
+100004,Taylor,Demo19,taylor.demo19@example.org,555-0119-1019,Asst Principal,Example Middle 19,Joplin Schools,Giancarlo,,https://example.org/s/19,Junior High,05-08,Town 4,2
+100001,Jamie,Placeholder20,jamie.placeholder20@example.org,,Principal,Example Middle 20,Springfield R-XII,Giancarlo,Test note,,Middle,07-09,Town 0,3
+100002,Drew,Mock21,drew.mock21@example.org,555-0121-1021,Asst Principal,,Saint Louis Public Schools,,,https://example.org/s/21,Junior High,06-08,Town 1,1
+100003,Quinn,Fake22,quinn.fake22@example.org,555-0122-1022,Principal,Example Middle 22,Columbia 93,Giancarlo,,,Middle,05-08,Town 2,2
+100004,Avery,Dummy23,avery.dummy23@example.org,555-0123-1023,Asst Principal,Example Middle 23,Joplin Schools,Giancarlo,,https://example.org/s/23,Junior High,07-09,Town 3,3
+100001,Pat,Example24,pat.example24@example.org,555-0124-1024,Principal,Example Middle 24,Springfield R-XII,,Test note,,Middle,06-08,Town 4,1
+100002,Sam,Sample25,sam.sample25@example.org,,Asst Principal,Example Middle 25,Saint Louis Public Schools,Giancarlo,,https://example.org/s/25,Junior High,05-08,Town 0,2
+100003,Alex,Tester26,alex.tester26@example.org,555-0126-1026,Principal,Example Middle 26,Columbia 93,Giancarlo,,,Middle,07-09,Town 1,3
+100004,Jordan,Demo27,,555-0127-1027,Asst Principal,Example Middle 27,Joplin Schools,,,https://example.org/s/27,Junior High,06-08,Town 2,1
+100001,Casey,Placeholder28,casey.placeholder28@example.org,555-0128-1028,Principal,,Springfield R-XII,Giancarlo,Test note,,Middle,05-08,Town 3,2
+100002,Riley,Mock29,riley.mock29@example.org,555-0129-1029,Asst Principal,Example Middle 29,Saint Louis Public Schools,Giancarlo,,https://example.org/s/29,Junior High,07-09,Town 4,3
+100003,Morgan,Fake30,morgan.fake30@example.org,,Principal,Example Middle 30,Columbia 93,,,,Middle,06-08,Town 0,1
+100004,Taylor,Dummy31,taylor.dummy31@example.org,555-0131-1031,Asst Principal,Example Middle 31,Joplin Schools,Giancarlo,,https://example.org/s/31,Junior High,05-08,Town 1,2
+100001,Jamie,Example32,jamie.example32@example.org,555-0132-1032,Principal,Example Middle 32,Springfield R-XII,Giancarlo,Test note,,Middle,07-09,Town 2,3
+100002,Drew,Sample33,drew.sample33@example.org,555-0133-1033,Asst Principal,Example Middle 33,Saint Louis Public Schools,,,https://example.org/s/33,Junior High,06-08,Town 3,1
+100003,Quinn,Tester34,quinn.tester34@example.org,555-0134-1034,Principal,Example Middle 34,Columbia 93,Giancarlo,,,Middle,05-08,Town 4,2
+100004,Avery,Demo35,avery.demo35@example.org,,Asst Principal,,Joplin Schools,Giancarlo,,https://example.org/s/35,Junior High,07-09,Town 0,3
+100001,Pat,Placeholder36,,555-0136-1036,Principal,Example Middle 36,Springfield R-XII,,Test note,,Middle,06-08,Town 1,1
+100002,Sam,Mock37,sam.mock37@example.org,555-0137-1037,Asst Principal,Example Middle 37,Saint Louis Public Schools,Giancarlo,,https://example.org/s/37,Junior High,05-08,Town 2,2
+100003,Alex,Fake38,alex.fake38@example.org,555-0138-1038,Principal,Example Middle 38,Columbia 93,Giancarlo,,,Middle,07-09,Town 3,3
+100004,Jordan,Dummy39,jordan.dummy39@example.org,555-0139-1039,Asst Principal,Example Middle 39,Joplin Schools,,,https://example.org/s/39,Junior High,06-08,Town 4,1

@@ -1,0 +1,46 @@
+{
+  "name": "cybersafely-lead-manager",
+  "private": true,
+  "version": "1.0.0",
+  "type": "module",
+  "scripts": {
+    "dev": "vite",
+    "build": "tsc --noEmit && vite build",
+    "preview": "vite preview",
+    "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "sync-emails": "python3 scripts/sync-emails.py",
+    "emails:watch": "python3 -u scripts/sync-emails.py --watch",
+    "test:parity": "node tests/e2e/parity.mjs",
+    "build:cloud": "tsc --noEmit && vite build --mode cloud --outDir dist-cloud",
+    "dev:cloud": "vite --mode cloud --port 5174",
+    "deploy": "python3 scripts/sync-emails.py && npm run build:cloud && VERCEL_ORG_ID=team_O7EVWUsq1avb3sTGCWNANT40 VERCEL_PROJECT_ID=prj_JdrScrCKZ6XDFzTrrpwYku4bYsoT vercel deploy dist-cloud --prod --yes",
+    "db": "vite-node scripts/db.ts --",
+    "migrate-backup": "vite-node scripts/migrate-backup.ts --",
+    "import-list": "vite-node scripts/import-list.ts --"
+  },
+  "dependencies": {
+    "@supabase/supabase-js": "2.117.2",
+    "lucide-react": "0.468.0",
+    "react": "18.3.1",
+    "react-dom": "18.3.1",
+    "react-markdown": "9.0.1",
+    "remark-gfm": "4.0.0"
+  },
+  "devDependencies": {
+    "@electric-sql/pglite": "0.5.8",
+    "@types/node": "22.15.21",
+    "@types/pg": "8.15.4",
+    "@types/react": "18.3.12",
+    "@types/react-dom": "18.3.1",
+    "@vitejs/plugin-react": "4.3.4",
+    "jsdom": "25.0.1",
+    "pg": "8.23.0",
+    "playwright": "1.49.1",
+    "typescript": "5.6.3",
+    "vite": "6.0.7",
+    "vite-node": "3.0.5",
+    "vite-plugin-singlefile": "2.1.0",
+    "vitest": "3.0.5"
+  }
+}
