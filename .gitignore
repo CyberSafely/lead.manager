@@ -19,3 +19,4 @@ __pycache__/
 !.env.cloud.example
 *.local.sh
 *.local.ts
+.vercel
