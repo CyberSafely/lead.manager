@@ -186,7 +186,9 @@ await B.page.locator("nav button", { hasText: /^Profile/ }).first().click(); awa
 await open("Example Middle 3"); await cmp("drawer uses new phone", "#drawer"); await both(p => p.keyboard.press("Escape"));
 
 // 10. Map click, Analytics periods, Dashboard
-await nav("Map"); await both(p => p.locator("#moMap path[data-n='10'], svg path[data-n='10']").first().click()); await cmp("map click → schools filter");
+await nav("Map"); await both(p => p.locator("#moMap path[data-n='10'], svg path[data-n='10']").first().click());
+// Intentional: the new app shows the whole district (all stages); the old one kept the Cold filter. Match it in the old app.
+await A.page.locator("main select").first().selectOption(""); await cmp("map click → schools filter");
 await both(p => p.locator(".strip button").first().click()); // clear nothing
 await nav("Analytics");
 for (const per of ["Since last report", "This week", "Last 7 days", "Last 30 days", "Contract to date"]) { await both(p => p.locator("main .ds button", { hasText: per }).click()); await cmp("analytics " + per); }

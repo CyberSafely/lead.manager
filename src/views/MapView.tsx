@@ -1,6 +1,6 @@
 // Missouri district map: leads per district as a heat map. Click a district to filter Schools.
 import { useMemo, useRef } from "react";
-import { DL, W, goTo, render, ui } from "../store";
+import { DL, W, emptyFilt, goTo, render, ui } from "../store";
 import { esc, normD } from "../lib/helpers";
 import { LeadTable } from "../components/ui";
 import type { DistrictFeature } from "../lib/types";
@@ -64,7 +64,8 @@ export function MapView() {
     if (code) { const l = L.find(x => String(x.districtId || "").trim() === code); if (l && l.district) nm = l.district; }
     if (!nm) { const nd = normD(f.properties.name); const l = L.find(x => normD(x.district) === nd); if (l && l.district) nm = l.district; }
     if (!nm) nm = f.properties.name;
-    ui.filt.district = nm; ui.view = "leads"; ui.pick = null; ui.mapFocus = ""; render();
+    // Show the whole district: every stage, no leftover search or filters (as Home's district click does)
+    ui.filt = { ...emptyFilt(), stage: "", district: nm }; ui.showAll = false; ui.view = "leads"; ui.pick = null; ui.mapFocus = ""; render();
   };
 
   return <div className="card">
