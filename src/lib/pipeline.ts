@@ -58,9 +58,11 @@ export const TPL_VERSION = 6;
 /** The follow-up email for a call outcome. Overseers get the district versions (D3, D4) where there is one. */
 export const callTpl = (l: Partial<Lead>, c: CallDef) => (l.type === "overseer" && c.ov) || c.tpl;
 
+/** The call's follow-up email has gone out. After a voicemail, the group send F4 counts as well as F3 / D3. */
+export const callFollowed = (l: Lead, c: CallDef) => { const sent = l.sent || []; return sent.includes(callTpl(l, c)) || (c === CALLS.unreach && sent.includes("f4")); };
 export function callPending(l: Lead) {
   const c = l.call && callDef(l.call.status);
-  return c && !["live", "active"].includes(l.stage) && !(l.sent || []).includes(callTpl(l, c)) ? c : null;
+  return c && !["live", "active"].includes(l.stage) && !callFollowed(l, c) ? c : null;
 }
 
 export function nextFor(l: Lead): [string, number | null] | null {
