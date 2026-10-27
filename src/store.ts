@@ -127,7 +127,12 @@ export const ui = {
   // Social tab: which section, and which post / group is open in its side panel
   socTab: "overview",
   socOpen: null as string | null,
+  // A set of records picked by clicking a number on the Analytics tab. Calls and Schools show only these
+  // (on top of their own filters) until cleared. Map: the district to highlight and list.
+  pick: null as Picked | null,
+  mapFocus: "",
 };
+export interface Picked { ids: string[]; label: string }
 
 /* ---------- subscriptions ---------- */
 let version = 0;
@@ -171,10 +176,28 @@ export function overseerOf(l: Lead) { return S.leads.find(o => isOv(o) && sameD(
 export { isAff, isCamp, isOv, isPr, isPta, isUser };
 
 /* ---------- navigation ---------- */
-export function setView(v: View) { ui.view = v; render(); }
+export function setView(v: View) { ui.view = v; ui.pick = null; ui.mapFocus = ""; render(); }
 export function setDs(v: ListId) {
   ui.ds = v; try { localStorage.setItem(KEY + "-ds", v); } catch (e) { /* */ }
-  ui.filt = emptyFilt(); ui.callFilt = ""; closeDrawer();
+  ui.filt = emptyFilt(); ui.callFilt = ""; ui.pick = null; closeDrawer();
+}
+/** The records a pick refers to (skips any deleted since). */
+export function picked(): Lead[] { const p = ui.pick; return p ? p.ids.map(lead).filter(Boolean) as Lead[] : []; }
+
+/** Where a click on the Analytics tab leads. ids: exact records; otherwise a list + filters. */
+export interface Go { view: "calls" | "leads" | "map"; label: string; ids?: string[]; ds?: ListId; stage?: string; region?: string; district?: string; call?: string }
+export function goTo(g: Go) {
+  // Switch to the list the records belong to; records from several lists stay together in one view
+  const lists = g.ids ? [...new Set(g.ids.map(id => lead(id)?.type || "principal"))] : [];
+  const ds = g.ds || (lists.length === 1 ? lists[0] as ListId : null);
+  if (ds && ds !== ui.ds) setDs(ds);
+  ui.filt = { ...emptyFilt(), stage: g.stage || "", region: g.region || "", district: g.view === "leads" ? g.district || "" : "" };
+  ui.callFilt = g.call || ""; ui.callLead = ""; ui.showAll = false;
+  ui.pick = g.ids ? { ids: g.ids, label: g.label } : null;
+  ui.mapFocus = g.view === "map" ? g.district || "" : "";
+  ui.view = g.view; ui.openId = null; ui.bulk = null;
+  if (g.ids?.length === 1 && g.view !== "map") ui.openId = g.ids[0];
+  render(); window.scrollTo(0, 0);
 }
 export function openLead(id: string) { ui.openId = id; ui.bulk = null; render(); }
 export function closeDrawer() { ui.openId = null; ui.bulk = null; render(); }

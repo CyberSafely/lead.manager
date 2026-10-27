@@ -1,7 +1,8 @@
 // Missouri district map: leads per district as a heat map. Click a district to filter Schools.
 import { useMemo, useRef } from "react";
-import { DL, render, ui } from "../store";
+import { DL, W, goTo, render, ui } from "../store";
 import { esc, normD } from "../lib/helpers";
+import { LeadTable } from "../components/ui";
 import type { DistrictFeature } from "../lib/types";
 
 const VW = 1000, VH = 700, PAD = 10;
@@ -41,6 +42,10 @@ export function MapView() {
   const heat = (n: number) => { if (!n) return "var(--sx)"; const t = Math.min(1, n / max); return `hsl(220 70% ${85 - t * 55}%)`; };
   const total = counts.reduce((a, b) => a + b, 0), hit = counts.filter(n => n > 0).length;
   const ds = ui.ds;
+  // District picked on Analytics: outline it on the map and list who is in it underneath
+  const fN = normD(ui.mapFocus), inF = DL().filter(l => fN && normD(l.district) === fN);
+  const fCodes = new Set(inF.map(l => String(l.districtId || "").trim()).filter(Boolean));
+  const fIdx = fN ? feats.findIndex(f => (f.properties.code && fCodes.has(f.properties.code)) || normD(f.properties.name) === fN) : -1;
 
   const onMove = (e: React.MouseEvent) => {
     const tip = tipRef.current!, svg = svgRef.current!;
@@ -59,7 +64,7 @@ export function MapView() {
     if (code) { const l = L.find(x => String(x.districtId || "").trim() === code); if (l && l.district) nm = l.district; }
     if (!nm) { const nd = normD(f.properties.name); const l = L.find(x => normD(x.district) === nd); if (l && l.district) nm = l.district; }
     if (!nm) nm = f.properties.name;
-    ui.filt.district = nm; ui.view = "leads"; render();
+    ui.filt.district = nm; ui.view = "leads"; ui.pick = null; ui.mapFocus = ""; render();
   };
 
   return <div className="card">
@@ -74,8 +79,16 @@ export function MapView() {
       <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`} style={{ width: "100%", height: "auto", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 6, display: "block" }}
         onMouseMove={onMove} onMouseLeave={() => { tipRef.current!.style.display = "none"; }} onClick={onClick}>
         {paths.map((d, i) => <path key={i} d={d} fill={heat(counts[i])} stroke="var(--line)" strokeWidth="0.5" data-i={i} data-n={counts[i]} />)}
+        {fIdx >= 0 ? <path d={paths[fIdx]} fill="none" stroke="var(--warn)" strokeWidth="3" style={{ pointerEvents: "none" }} /> : null}
       </svg>
       <div ref={tipRef} style={{ position: "absolute", pointerEvents: "none", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 4, padding: "4px 8px", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,.15)", display: "none", zIndex: 2, whiteSpace: "nowrap" }}></div>
     </div>
+    {ui.mapFocus ? <div style={{ marginTop: 14 }} data-parity-skip>
+      <div className="row"><h3 className="grow" style={{ margin: 0 }}>{ui.mapFocus} <span className="muted">· {inF.length} {inF.length === 1 ? W().one : W().many}{fIdx < 0 ? " · not found on the map" : ""}</span></h3>
+        <button className="b sm" onClick={() => goTo({ view: "leads", label: ui.mapFocus, district: inF[0]?.district || ui.mapFocus })}>Open in {W().many} list</button>
+        <button className="b sm" onClick={() => { ui.view = "stats"; ui.mapFocus = ""; render(); }}>‹ Back to Analytics</button>
+        <button className="b sm" onClick={() => { ui.mapFocus = ""; render(); }}>Clear</button></div>
+      {inF.length ? <div style={{ marginTop: 8 }}><LeadTable arr={inF} compact /></div> : <p className="muted">No {W().many} in this district on this list.</p>}
+    </div> : null}
   </div>;
 }

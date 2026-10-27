@@ -1,17 +1,17 @@
 // Schools: the full list with filters, paging, bulk email and bulk stage moves.
-import { DL, W, bulkOpen, render, save, ui } from "../store";
+import { DL, W, bulkOpen, picked, render, save, ui } from "../store";
 import { newLead } from "../actions";
 import { RANK, stagesFor, stg } from "../lib/pipeline";
 import { campsOf, digits, name, todayISO } from "../lib/helpers";
 import { Megaphone } from "lucide-react";
 import { setStage } from "../lib/logic";
-import { LeadTable, Strip } from "../components/ui";
+import { LeadTable, PickBanner, Strip } from "../components/ui";
 import type { Lead, StageId } from "../lib/types";
 import type { Filters } from "../store";
 
 export function filtered(): Lead[] {
   const t = todayISO(), filt = ui.filt, ds = ui.ds;
-  return DL().filter(l => {
+  return (ui.pick ? picked() : DL()).filter(l => {
     if (filt.stage && l.stage !== filt.stage) return false;
     if (filt.district && (ds === "campaign" ? !campsOf(l).includes(filt.district) : l.district !== filt.district)) return false;
     if (filt.due === "over" && !(l.nextDue && l.nextDue <= t)) return false;
@@ -55,6 +55,7 @@ export function Leads() {
   const levels = uniq("level"), grades = uniq("grades"), regions = uniq("region");
   const dOpts = ds === "campaign" ? [...new Set(DL().flatMap(campsOf))].sort() : uniq("district");
   return <>
+    <PickBanner arr={arr} />
     <Strip />
     {ds === "campaign" ? <CampaignPicker /> : null}
     <div className="row" style={{ marginBottom: 12 }}>
@@ -69,7 +70,7 @@ export function Leads() {
       {regions.length ? <select value={filt.region} onChange={set("region")}><option value="">Any region</option>{regions.sort((a, b) => (a as any) - (b as any)).map(v => <option key={v} value={v}>Region {v}</option>)}</select> : null}
       <button className="b" onClick={newLead}>+ Add {W().one}</button>
     </div>
-    <div className="row small muted" style={{ marginBottom: 8 }}>{arr.length} of {DL().length} {W().many}
+    <div className="row small muted" style={{ marginBottom: 8 }}>{arr.length} of {(ui.pick ? picked() : DL()).length} {W().many}
       {arr.length > 25 ? <> · showing {ui.showAll ? arr.length : Math.min(25, arr.length)} · <button className="b sm" onClick={() => { ui.showAll = !ui.showAll; render(); }}>{ui.showAll ? "Show 25" : "Show all " + arr.length}</button></> : null}
       {arr.length ? <> · <button className="b sm p" onClick={() => bulkOpen(arr.slice(0, 25))}>Bulk email these {Math.min(25, arr.length)} with Outlook</button> · Move to <select value="" onChange={e => {
         const st = e.target.value as StageId; if (!st) return;

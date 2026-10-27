@@ -399,3 +399,12 @@ button.b.ghost{border-color:transparent;background:transparent;color:var(--muted
   .cal-d{min-height:72px}
   .tile.sm .t{font-size:11px}
 }
+
+/* Analytics: every number and row is a link to the records behind it (data-go, set only in the app) */
+.rpt [data-go]{cursor:pointer;border-radius:4px}
+.rpt [data-go]:hover{background:var(--hover)}
+.rpt .k[data-go]:hover{border-color:var(--accent)}
+.rpt tr[data-go]:hover td:first-child{color:var(--accent);text-decoration:underline}
+.rpt [data-go]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+/* Calls / Schools: the records picked on Analytics */
+.card.pick{margin-bottom:12px;border-left:3px solid var(--accent)}

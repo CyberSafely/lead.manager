@@ -1,15 +1,17 @@
 // Call list for principals who opened the emails. One row per principal: tap to call, pick the outcome.
-import { DL, S, W, lead, openLead, render, save, tpl, ui } from "../store";
+import { DL, S, W, lead, openLead, picked, render, save, tpl, ui } from "../store";
 import { CALLS, CALL_IDS, KEY, callDef } from "../lib/pipeline";
 import { dueClass, fmtDate, name, schoolOf } from "../lib/helpers";
 import { fill, log, setCall } from "../lib/logic";
-import { Inp, MailLink, TelLink, css } from "../components/ui";
+import { Inp, MailLink, PickBanner, TelLink, css } from "../components/ui";
 import type { Lead } from "../lib/types";
 
 const SCRIPT_KEY = KEY + "-call-script";
 
 export function Calls() {
-  const L = DL().sort((a, b) => (a.district || "").localeCompare(b.district || "") || schoolOf(a).localeCompare(schoolOf(b)));
+  // Picked on Analytics: just those records, soonest due first; otherwise the whole list by district
+  const L = ui.pick ? picked().sort((a, b) => (a.nextDue || "9").localeCompare(b.nextDue || "9") || schoolOf(a).localeCompare(schoolOf(b)))
+    : DL().sort((a, b) => (a.district || "").localeCompare(b.district || "") || schoolOf(a).localeCompare(schoolOf(b)));
   const st = (l: Lead) => (l.call && callDef(l.call.status)) ? l.call.status! : "none";
   const cf = ui.callFilt;
   const arr = L.filter(l => !cf || st(l) === cf);
@@ -30,6 +32,7 @@ export function Calls() {
   const pickLead = (id: string) => { ui.callLead = id; ui.callScriptOpen = true; render(); };
   const caller = S.settings.caller === "Torino" ? "Torino" : "Giancarlo";
   return <>
+    <PickBanner arr={arr} />
     <div className="strip calls">{cell("none", "Not called yet", "--s0")}{CALL_IDS.map(k => cell(k, CALLS[k].name, CALLS[k].c))}</div>
     <div className="banner">Missouri is on <b>Central time</b> (1 h behind ET and Puerto Rico). Best windows: 7:30–8:15 AM or 2:45–3:45 PM CT. Keep it short, and don't repeat the emails. Each outcome queues its follow-up email in <b>Today</b> for the next workday.</div>
     <div className="row" style={{ marginBottom: 10 }}>

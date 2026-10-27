@@ -1,12 +1,36 @@
 // Shared building blocks: committed inputs, contact links, the stage stepper and strip, the lead table.
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type InputHTMLAttributes, type MouseEvent, type ReactNode, type TextareaHTMLAttributes } from "react";
-import { DL, S, W, isAff, isCamp, isOv, openLead, render, schoolsOf, ui } from "../store";
-import { AFF_SEQ, CALLS, MAIN, STAGE, STAGES, callDef, stg } from "../lib/pipeline";
-import { bizSince, campsOf, digits, dueClass, firstEmailTs, fmtDate, fmtFollowers, fmtPhone, lastTouch, name, outlookUrl, schoolOf, touches } from "../lib/helpers";
+import { DL, S, W, bulkOpen, isAff, isCamp, isOv, openLead, render, schoolsOf, setView, tpl, ui } from "../store";
+import { AFF_SEQ, CALLS, MAIN, STAGE, STAGES, callDef, stg, suggestTpl } from "../lib/pipeline";
+import { bizSince, campsOf, digits, dueClass, firstEmailTs, fmtDate, fmtFollowers, fmtPhone, lastTouch, name, outlookUrl, schoolOf, todayISO, touches } from "../lib/helpers";
 import type { Lead, StageId, Template } from "../lib/types";
 
 export const cv = (s: StageId) => `var(${STAGE[s].c})`;
 export const css = (o: Record<string, string | number>) => o as CSSProperties;
+
+/* ---------- records picked on the Analytics tab ---------- */
+// Shown on Calls and Schools while a pick is active: what was clicked, the emails these records need next
+// (one batch per email, like Today), and the way back.
+export function PickBanner({ arr }: { arr: Lead[] }) {
+  const p = ui.pick; if (!p) return null;
+  const byTpl: Record<string, Lead[]> = {};
+  arr.filter(l => l.stage !== "lost").forEach(l => { const s = suggestTpl(l); if (s) (byTpl[s] = byTpl[s] || []).push(l); });
+  const t = todayISO(), over = arr.filter(l => l.nextDue && l.nextDue <= t && l.stage !== "lost").length;
+  return <div className="card pick" data-parity-skip>
+    <div className="row">
+      <span className="grow"><span className="small muted">From Analytics</span><br /><b>{p.label}</b> · {arr.length} {arr.length === 1 ? "record" : "records"}{over ? <> · <span className="over">{over} due now</span></> : null}</span>
+      <button className="b sm" onClick={() => setView("stats")}>‹ Back to Analytics</button>
+      <button className="b sm" onClick={() => { ui.pick = null; render(); }}>Show everyone</button>
+    </div>
+    {Object.keys(byTpl).length ? <div style={{ marginTop: 8 }}><div className="small muted">Next email for these</div>
+      {Object.entries(byTpl).sort((a, b) => b[1].length - a[1].length).map(([id, ls]) => {
+        const ne = ls.filter(l => !l.email).length;
+        return <div key={id} className="row" style={{ padding: "3px 0" }}><span className="chip">{ls.length}</span>
+          <span className="grow">{tpl(id)?.name || id}{ne ? <> <span className="small over">({ne} missing email)</span></> : null}</span>
+          <button className="b sm p" onClick={() => bulkOpen(ls, id)}>Send as batch</button></div>;
+      })}</div> : null}
+  </div>;
+}
 
 /* ---------- inputs that save on "change" (blur / Enter), like the original app ---------- */
 // Uncontrolled, so typing doesn't re-render the app; the DOM value follows the saved value when it changes.
