@@ -6,6 +6,7 @@ import { campsOf, digits, dueClass, fmtDate, name, schoolOf, todayISO } from "..
 import { Megaphone } from "lucide-react";
 import { setStage } from "../lib/logic";
 import { Contact, LeadTable, PickBanner, Strip, rowOpen } from "../components/ui";
+import { QuickAdd } from "../components/QuickAdd";
 import type { Lead, StageId } from "../lib/types";
 import type { Filters } from "../store";
 
@@ -108,6 +109,7 @@ export function Leads() {
     <PickBanner arr={arr} />
     <Strip />
     {ds === "campaign" ? <CampaignPicker /> : null}
+    {ds === "affiliate" ? <QuickAdd /> : null}
     <div className="row" style={{ marginBottom: 12 }}>
       <input placeholder={`Search ${ds === "affiliate" ? "name, username, platform" : ds === "campaign" || ds === "pta" || ds === "user" ? "name, email, organization" : ds === "overseer" ? "overseer, district" : "school, principal, district"}, notes`}
         value={filt.q} onChange={set("q")} className="grow" style={{ minWidth: 200 }} />
