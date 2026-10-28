@@ -21,7 +21,7 @@ export function Calls() {
     <div className="l">{label}</div><div className="v">{cnt(k)}</div></button>;
   // Script dropdown: every call script in emails/Calls (the voicemail has its own card below).
   // Default: C4s (simplified) for schools, C3 for district overseers. Falls back to C1 if C4s isn't synced yet.
-  const ov = ui.ds === "overseer";
+  const ov = ui.ds === "overseer" || ui.ds === "cto";
   const scripts = S.templates.filter(t => t.phase === "Calls" && t.id !== "vm");
   const def = ov ? "c3" : tpl("c4s") ? "c4s" : "c1";
   const sid = scripts.some(t => t.id === ui.callScript) ? ui.callScript : def;

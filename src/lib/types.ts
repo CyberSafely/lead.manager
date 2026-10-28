@@ -1,7 +1,7 @@
 // Data model. Field names and ids match what's already saved in localStorage ("cs-outreach-v1"): never rename them.
 
 export type StageId = "new" | "contacted" | "rejected" | "engaged" | "live" | "active" | "nurture" | "lost";
-export type ListId = "principal" | "overseer" | "campaign" | "pta" | "user" | "affiliate";
+export type ListId = "principal" | "overseer" | "cto" | "campaign" | "pta" | "user" | "affiliate";
 export type CallId = "interested" | "info" | "followup" | "not" | "unreach";
 
 export interface Activity { ts: string; type: string; note: string }

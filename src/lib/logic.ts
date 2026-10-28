@@ -1,7 +1,7 @@
 // Merge fields and stage logic. Stage changes go through setStage() so they're logged and the next step is recomputed.
-import { S, overseerOf, save, schoolsOf, tpl } from "../store";
+import { S, ctoOf, overseerOf, save, schoolsOf, tpl } from "../store";
 import { CALLS, MAIN, callDef, nextFor, stg } from "./pipeline";
-import { addBiz, isPr, nowTs, schoolOf, todayISO } from "./helpers";
+import { addBiz, isDist, isPr, nowTs, schoolOf, todayISO } from "./helpers";
 import type { Lead, StageId } from "./types";
 
 /* ---------- merge fields ---------- */
@@ -13,7 +13,7 @@ function districtLinks(l: Partial<Lead>) {
 }
 /** {{school_links}}: each school's own sign-up link, one per line. An overseer gets every school in their district. */
 function schoolLinks(l: Partial<Lead>) {
-  const ls = l.type === "overseer" ? schoolsOf(l as Lead) : [l];
+  const ls = isDist(l) ? schoolsOf(l as Lead) : [l];
   if (!ls.length) return "[no schools from this district in the Lead Manager yet]";
   return ls.map(s => `${s.school || s.district || "[school]"}: ${s.regLink || "[no sign-up link on file]"}`).join("\n");
 }
@@ -25,7 +25,7 @@ export function tokens(l: Partial<Lead>) {
     sender: S.settings.sender, phone: S.settings.phone || "[your phone]",
     title: S.settings.title || "[your title]", sender_email: S.settings.sender_email || "[your email]",
     mailing_address: S.settings.mailingAddress || "[CyberSafely.ai mailing address]",
-    signup_link: l.regLink || (l.type === "overseer" ? districtLinks(l) : l.type === "affiliate" ? "[their tracking link]" : S.settings.defaultLink || "[school's sign-up link]"),
+    signup_link: l.regLink || (isDist(l) ? districtLinks(l) : l.type === "affiliate" ? "[their tracking link]" : S.settings.defaultLink || "[school's sign-up link]"),
     school_links: schoolLinks(l),
     onboarding_page: S.settings.onboardingPage || "[parent onboarding page link]",
     support: S.settings.support || "[support email or phone]",
@@ -97,9 +97,8 @@ export function setSignups(l: Lead, v: string) {
   const n = +v || 0, tgt = +S.settings.activeTarget || 10;
   if (n >= tgt && l.stage !== "active") setStage(l, "active", `${n} sign-ups`);
   else if (n > 0 && n < tgt && MAIN.indexOf(l.stage) < MAIN.indexOf("live")) setStage(l, "live", `${n} sign-ups`);
-  // The district's overseer goes Live with the first sign-ups at any of its schools
-  const o = n > 0 && isPr(l) ? overseerOf(l) : undefined;
-  if (o && MAIN.indexOf(o.stage) < MAIN.indexOf("live")) setStage(o, "live", `${schoolOf(l)}: ${n} sign-ups`);
+  // The district's overseer and CTO go Live with the first sign-ups at any of its schools
+  if (n > 0 && isPr(l)) [overseerOf(l), ctoOf(l)].forEach(o => { if (o && MAIN.indexOf(o.stage) < MAIN.indexOf("live")) setStage(o, "live", `${schoolOf(l)}: ${n} sign-ups`); });
 }
 // Record a call outcome: moves the stage and queues the matching follow-up email
 export function setCall(l: Lead, st: string, note?: string) {

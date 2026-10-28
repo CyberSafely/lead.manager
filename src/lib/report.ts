@@ -7,7 +7,7 @@ import { addBiz, dl, esc, fmtFollowers, iso, todayISO } from "./helpers";
 import type { Lead, ReportSettings, StageId } from "./types";
 import { isAff, isPr } from "./helpers";
 
-export const LISTS: [string, string][] = [["principal", "Principals"], ["overseer", "Overseers"], ["campaign", "Campaigns"], ["pta", "PTA"], ["user", "App users"], ["affiliate", "Affiliates"]];
+export const LISTS: [string, string][] = [["principal", "Principals"], ["overseer", "Overseers"], ["cto", "CTOs"], ["campaign", "Campaigns"], ["pta", "PTA"], ["user", "App users"], ["affiliate", "Affiliates"]];
 const CALL_ACTS = ["Call", "Call: reached", "Voicemail", "Front office message"];
 const TALK_ACTS = ["Call: reached", "Reply received", "Meeting / demo", "Says they shared it"];
 const AFF_TALK = ["Replied", "Agreed to partner"];

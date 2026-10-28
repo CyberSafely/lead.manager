@@ -30,6 +30,10 @@ export function dueClass(s?: string) { if (!s) return ""; const t = todayISO(); 
 export function dtLocal(d: Date) { return iso(d) + "T" + String(d.getHours()).padStart(2, "0") + ":" + String(d.getMinutes()).padStart(2, "0"); }
 
 export const isOv = (l: Lead) => l.type === "overseer";
+/** District technology leaders (CTO, CIO, tech director): their own list, but district-level like overseers. */
+export const isCto = (l: Lead) => l.type === "cto";
+/** District-level contacts (overseers and CTOs): linked to the district's schools, sent the district emails (D1–D4). */
+export const isDist = (l: Partial<Lead>) => l.type === "overseer" || l.type === "cto";
 export const isCamp = (l: Lead) => l.type === "campaign";
 export const isPta = (l: Lead) => l.type === "pta";
 export const isUser = (l: Lead) => l.type === "user";

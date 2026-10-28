@@ -1,7 +1,7 @@
 // The right-hand drawer: one school / contact (LeadDrawer) or a bulk send (BulkDrawer).
 import { useEffect, useRef, useState } from "react";
 import { KEY, ACTS, CALLS, CALL_IDS, SEQ, STAGE, STAGES, callDef, suggestTpl } from "../lib/pipeline";
-import { S, W, closeDrawer, inDs, isAff, isCamp, isOv, isPta, isUser, lead, openLead, overseerOf, render, save, schoolsOf, tpl, ui } from "../store";
+import { S, W, closeDrawer, ctoOf, inDs, isAff, isCamp, isCto, isDist, isOv, isPta, isUser, lead, openLead, overseerOf, render, save, schoolsOf, tpl, ui } from "../store";
 import { csvCell, dl, domainOf, dueClass, fmtDate, name, outlookUrl, placeholders, schoolOf, todayISO, campsOf } from "../lib/helpers";
 import { autoAdvance, fwd, log, logSent, render1, resetLead, setCall, setNext, setSignups, setStage, toHubspot, tokens } from "../lib/logic";
 import { AffDrawer } from "./AffDrawer";
@@ -116,10 +116,10 @@ function LeadDrawer({ l }: { l: Lead }) {
       <div key={i}><b>{a.type}</b> <span className="muted small">{new Date(a.ts).toLocaleString()}</span><div className="small">{a.note}</div></div>)
       : <span className="muted small">No activity yet.</span>}</div>
     <div className="row" style={{ marginTop: 16 }}><button className="b sm" title="Clear touches, emails sent, call outcome, sign-ups and history. Contact details and notes stay." onClick={() => {
-      if (confirm("Reset this " + (isOv(l) ? "overseer" : isCamp(l) || isPta(l) ? "contact" : isUser(l) ? "user" : "school") + " to Cold and start over?\n\nThis clears touches, emails sent, the call outcome, sign-up counts and the whole history. Contact details and notes stay. This can't be undone.")) { resetLead(l); save(); }
+      if (confirm("Reset this " + (isOv(l) ? "overseer" : isCto(l) ? "CTO" : isCamp(l) || isPta(l) ? "contact" : isUser(l) ? "user" : "school") + " to Cold and start over?\n\nThis clears touches, emails sent, the call outcome, sign-up counts and the whole history. Contact details and notes stay. This can't be undone.")) { resetLead(l); save(); }
     }}>Reset outreach</button><button className="b d sm" onClick={() => {
       if (confirm("Delete this school and its history?")) { S.leads = S.leads.filter(x => x.id !== l.id); save(); closeDrawer(); }
-    }}>Delete {isOv(l) ? "overseer" : isCamp(l) || isPta(l) ? "contact" : isUser(l) ? "user" : "school"}</button></div>
+    }}>Delete {isOv(l) ? "overseer" : isCto(l) ? "CTO" : isCamp(l) || isPta(l) ? "contact" : isUser(l) ? "user" : "school"}</button></div>
   </>;
 }
 
@@ -141,10 +141,10 @@ function LinkBox({ l }: { l: Lead }) {
     const d = domainOf(l), ppl = d ? S.leads.filter(x => !isCamp(x) && domainOf(x) === d) : [], cs = campsOf(l);
     return <><h3>Campaigns</h3><div className="row">{cs.length ? cs.map((c, i) => <span key={i} className="chip">{c}</span>) : <span className="small muted">None</span>}</div>
       {ppl.length ? <><h3>Already in our pipeline at @{d} ({ppl.length})</h3><div className="subl">{ppl.map(s => <div key={s.id} className="it" onClick={jump(s.id)}>
-        <div><b>{name(s)}</b><div className="small">{isOv(s) ? "District overseer" : schoolOf(s)}</div></div>
+        <div><b>{name(s)}</b><div className="small">{isOv(s) ? "District overseer" : isCto(s) ? "District CTO" : schoolOf(s)}</div></div>
         <div className="small" style={{ textAlign: "right" }}><TelLink l={s} /><div><Dot c={cv(s.stage)} />{STAGE[s.stage].name}</div></div></div>)}</div></> : null}</>;
   }
-  if (isOv(l)) {
+  if (isDist(l)) {
     const ss = schoolsOf(l);
     return <><h3>Schools in this district ({ss.length})</h3>
       {ss.length ? <div className="subl">{ss.map(s => <div key={s.id} className="it" onClick={jump(s.id)}>
@@ -152,10 +152,12 @@ function LinkBox({ l }: { l: Lead }) {
         <div className="small" style={{ textAlign: "right" }}><TelLink l={s} /><div><MailLink l={s} /></div><Dot c={cv(s.stage)} />{STAGE[s.stage].name}{callDef(s.call?.status) ? " · " + callDef(s.call?.status)!.short : ""}</div></div>)}</div>
         : <p className="small muted">No principals matched. Check that the District ID or district name matches the principal data.</p>}</>;
   }
-  const o = overseerOf(l); if (!o) return null;
-  return <><h3>District overseer</h3><div className="subl"><div className="it" onClick={jump(o.id)}>
-    <div><b>{name(o)}</b><div className="small">{o.jobtitle || "District overseer"} · {o.district} · {schoolsOf(o).length} schools</div></div>
-    <div className="small" style={{ textAlign: "right" }}><TelLink l={o} /><div><MailLink l={o} /></div><Dot c={cv(o.stage)} />{STAGE[o.stage].name}</div></div></div></>;
+  // Principal drawer: the district's overseer, and its CTO if there is one
+  const box = (o: Lead | undefined, h: string) => o ? <><h3>{h}</h3><div className="subl"><div className="it" onClick={jump(o.id)}>
+    <div><b>{name(o)}</b><div className="small">{o.jobtitle || h} · {o.district} · {schoolsOf(o).length} schools</div></div>
+    <div className="small" style={{ textAlign: "right" }}><TelLink l={o} /><div><MailLink l={o} /></div><Dot c={cv(o.stage)} />{STAGE[o.stage].name}</div></div></div></> : null;
+  const o = overseerOf(l), c = ctoOf(l); if (!o && !c) return null;
+  return <>{box(o, "District overseer")}{box(c, "District CTO")}</>;
 }
 
 /* ---------- bulk send ---------- */

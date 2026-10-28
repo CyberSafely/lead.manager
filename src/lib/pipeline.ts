@@ -1,6 +1,7 @@
 // Pipeline definition. One lead = one principal = one school. Simplified flow: one email with a forward-ready family
 // message; success is measured by sign-ups on the school's code. "We send it for you" is the exception.
 import type { CallId, Lead, StageId } from "./types";
+import { isDist } from "./helpers";
 
 export const MAIN: StageId[] = ["new", "contacted", "engaged", "live", "active"];
 export interface Stage { id: StageId; name: string; desc: string; c: string }
@@ -56,7 +57,7 @@ export const KEY = "cs-outreach-v1";
 export const TPL_VERSION = 6;
 
 /** The follow-up email for a call outcome. Overseers get the district versions (D3, D4) where there is one. */
-export const callTpl = (l: Partial<Lead>, c: CallDef) => (l.type === "overseer" && c.ov) || c.tpl;
+export const callTpl = (l: Partial<Lead>, c: CallDef) => (isDist(l) && c.ov) || c.tpl;
 
 /** The call's follow-up email has gone out. After a voicemail, the group send F4 counts as well as F3 / D3. */
 export const callFollowed = (l: Lead, c: CallDef) => { const sent = l.sent || []; return sent.includes(callTpl(l, c)) || (c === CALLS.unreach && sent.includes("f4")); };
@@ -72,7 +73,7 @@ export function nextFor(l: Lead): [string, number | null] | null {
   if (s === "new") return l.type === "pta" ? ["Send PTA intro (PT1)", 0] : l.type === "user" ? ["Send check-in email (U1)", 0] : l.type === "campaign" ? ["Send a personal follow-up email", 0] : ["Send first email (E1)", 0];
   if (s === "contacted" && (l.type === "pta" || l.type === "user")) return ["No reply? Send a short personal follow-up", 5];
   if (s === "contacted") return q <= 1 ? ["Day 4: call. No answer → voicemail + E2", 4] : q === 2 ? ["Day 10: last email (E3)", 4] : ["No reply: moves to Nurture", 4];
-  if (s === "engaged" && l.type === "overseer") return !(l.sent || []).includes("d4") ? ["Send each school's sign-up link (D4)", 0] : ["Check sign-ups at the district's schools", 5];
+  if (s === "engaged" && isDist(l)) return !(l.sent || []).includes("d4") ? ["Send each school's sign-up link (D4)", 0] : ["Check sign-ups at the district's schools", 5];
   if (s === "engaged") return l.path === "we" ? ["We send it: get contacts (R3), send family message", 2] :
     l.shared ? ["Check sign-ups on the school's code", 5] : ["Check sign-ups; nudge (G1) if none", 8];
   if (s === "live") return (l.sent || []).includes("g2") ? ["Monthly update (G3)", 20] : ["Send thank-you + reminder (G2)", 0];
@@ -86,15 +87,15 @@ export function suggestTpl(l: Pick<Lead, "stage"> & Partial<Lead>): string | nul
   const s = l.stage, q = l.seq || 0, sent = l.sent || [];
   const c = callPending(l as Lead); if (c) return callTpl(l, c);
   if (l.type === "affiliate") return affTpl(l);
-  if (s === "new") return l.type === "overseer" ? "d1" : l.type === "pta" ? "pt1" : l.type === "user" ? "u1" : l.type === "campaign" ? null : "e1";
+  if (s === "new") return isDist(l) ? "d1" : l.type === "pta" ? "pt1" : l.type === "user" ? "u1" : l.type === "campaign" ? null : "e1";
   if ((l.type === "pta" || l.type === "user") && s === "contacted") return null;
   if (s === "contacted") return q <= 1 ? "e2" : "e3";
-  if (s === "engaged" && l.type === "overseer") return sent.includes("d4") ? null : "d4";
+  if (s === "engaged" && isDist(l)) return sent.includes("d4") ? null : "d4";
   if (s === "engaged") return l.path === "we" ? "r3" : "g1";
   if (s === "live") return sent.includes("g2") ? "g3" : "g2";
   if (s === "active") return "g3";
   if (s === "nurture") return "e3";
-  if (s === "rejected") return sent[sent.length - 1] || (l.type === "overseer" ? "d1" : "e1");
+  if (s === "rejected") return sent[sent.length - 1] || (isDist(l) ? "d1" : "e1");
   return "r2";
 }
 

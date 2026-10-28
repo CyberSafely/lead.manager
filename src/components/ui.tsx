@@ -1,6 +1,6 @@
 // Shared building blocks: committed inputs, contact links, the stage stepper and strip, the lead table.
 import { Fragment, useEffect, useRef, useState, type CSSProperties, type InputHTMLAttributes, type MouseEvent, type ReactNode, type TextareaHTMLAttributes } from "react";
-import { DL, S, W, bulkOpen, isAff, isCamp, isOv, openLead, render, schoolsOf, setView, tpl, ui } from "../store";
+import { DL, S, W, bulkOpen, isAff, isCamp, isDist, isOv, openLead, render, schoolsOf, setView, tpl, ui } from "../store";
 import { AFF_SEQ, CALLS, MAIN, STAGE, STAGES, callDef, stg, suggestTpl } from "../lib/pipeline";
 import { bizSince, campsOf, digits, dueClass, firstEmailTs, fmtDate, fmtFollowers, fmtPhone, lastTouch, name, outlookUrl, schoolOf, todayISO, touches } from "../lib/helpers";
 import type { Lead, StageId, Template } from "../lib/types";
@@ -158,7 +158,7 @@ export function LeadTable({ arr, compact }: { arr: Lead[]; compact?: boolean }) 
       <td><b>{schoolOf(l)}</b>
         {l.school && l.district && l.school !== l.district ? <div className="small muted">{l.district}</div> : null}
         {l.level || l.grades || l.city ? <div className="small muted">{[l.level, l.grades && "Gr " + l.grades, l.city].filter(Boolean).join(" · ")}</div> : null}
-        {isOv(l) ? <div><span className="chip">{schoolsOf(l).length} schools</span></div> : null}
+        {isDist(l) ? <div><span className="chip">{schoolsOf(l).length} schools</span></div> : null}
         {isAff(l) ? <div className="small muted">{[l.platform, l.followers && fmtFollowers(l.followers) + " followers"].filter(Boolean).join(" · ")}
           {l.profileUrl ? <> · <a href={l.profileUrl} target="_blank" rel="noopener noreferrer">profile ↗</a></> : null}</div> : null}
         {isCamp(l) ? <><div className="small muted">{l.state || ""}</div><div>{campsOf(l).map((c, i) => <Fragment key={i}>{i ? " " : null}<span className="chip">{c}</span></Fragment>)}</div></> : null}

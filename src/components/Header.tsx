@@ -5,7 +5,7 @@ import { digits, name, schoolOf } from "../lib/helpers";
 import type { Lead, ListId } from "../lib/types";
 import { signOut } from "../sync";
 
-const LISTS: [ListId, string][] = [["principal", "Principals"], ["overseer", "Overseers"], ["campaign", "Campaigns"], ["pta", "PTA"], ["user", "Users"], ["affiliate", "Affiliates"]];
+const LISTS: [ListId, string][] = [["principal", "Principals"], ["overseer", "Overseers"], ["cto", "CTOs"], ["campaign", "Campaigns"], ["pta", "PTA"], ["user", "Users"], ["affiliate", "Affiliates"]];
 
 export function Header() {
   return <header>

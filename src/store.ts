@@ -4,7 +4,7 @@
 import { useSyncExternalStore } from "react";
 import { DEFAULT_TEMPLATES } from "./lib/defaultTemplates";
 import { KEY, TPL_VERSION, suggestTpl } from "./lib/pipeline";
-import { isAff, isCamp, isOv, isPr, isPta, isUser, sameD, schoolOf } from "./lib/helpers";
+import { isAff, isCamp, isCto, isDist, isOv, isPr, isPta, isUser, sameD, schoolOf } from "./lib/helpers";
 import type { AppState, Lead, ListId, Template, VaultTemplates } from "./lib/types";
 
 /* ---------- saved data ---------- */
@@ -99,7 +99,7 @@ export interface Filters { q: string; stage: string; district: string; due: stri
 export const emptyFilt = (): Filters => ({ q: "", stage: "new", district: "", due: "", email: "", level: "", grades: "", region: "" });
 
 function initialDs(): ListId {
-  try { const v = localStorage.getItem(KEY + "-ds"); if (v === "overseer" || v === "campaign" || v === "pta" || v === "user" || v === "affiliate") return v; } catch (e) { /* */ }
+  try { const v = localStorage.getItem(KEY + "-ds"); if (v === "overseer" || v === "cto" || v === "campaign" || v === "pta" || v === "user" || v === "affiliate") return v; } catch (e) { /* */ }
   return "principal";
 }
 
@@ -167,13 +167,15 @@ export function W() {
     : ds === "pta" ? { one: "PTA contact", many: "PTA contacts", Unit: "PTA / organization", Who: "Contact" }
     : ds === "campaign" ? { one: "contact", many: "contacts", Unit: "Organization", Who: "Contact" }
     : ds === "overseer" ? { one: "overseer", many: "overseers", Unit: "District", Who: "Overseer" }
+    : ds === "cto" ? { one: "CTO", many: "CTOs", Unit: "District", Who: "CTO" }
     : { one: "school", many: "schools", Unit: "School", Who: "Principal" };
 }
 export function lead(id: string) { return S.leads.find(l => l.id === id); }
 export function tpl(id: string) { return S.templates.find(t => t.id === id); }
 export function schoolsOf(o: Lead) { return S.leads.filter(l => isPr(l) && sameD(l, o)).sort((a, b) => schoolOf(a).localeCompare(schoolOf(b))); }
 export function overseerOf(l: Lead) { return S.leads.find(o => isOv(o) && sameD(o, l)); }
-export { isAff, isCamp, isOv, isPr, isPta, isUser };
+export function ctoOf(l: Lead) { return S.leads.find(o => isCto(o) && sameD(o, l)); }
+export { isAff, isCamp, isCto, isDist, isOv, isPr, isPta, isUser };
 
 /* ---------- navigation ---------- */
 export function setView(v: View) { ui.view = v; ui.pick = null; ui.mapFocus = ""; render(); }

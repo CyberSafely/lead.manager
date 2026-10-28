@@ -111,9 +111,9 @@ export function Leads() {
     {ds === "campaign" ? <CampaignPicker /> : null}
     {ds === "affiliate" ? <QuickAdd /> : null}
     <div className="row" style={{ marginBottom: 12 }}>
-      <input placeholder={`Search ${ds === "affiliate" ? "name, username, platform" : ds === "campaign" || ds === "pta" || ds === "user" ? "name, email, organization" : ds === "overseer" ? "overseer, district" : "school, principal, district"}, notes`}
+      <input placeholder={`Search ${ds === "affiliate" ? "name, username, platform" : ds === "campaign" || ds === "pta" || ds === "user" ? "name, email, organization" : ds === "overseer" ? "overseer, district" : ds === "cto" ? "CTO, district" : "school, principal, district"}, notes`}
         value={filt.q} onChange={set("q")} className="grow" style={{ minWidth: 200 }} />
-      <select value={filt.stage} onChange={set("stage")}><option value="">All stages</option>{STAGES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}{ds === "principal" || ds === "overseer" ? <option value="called">Called</option> : null}</select>
+      <select value={filt.stage} onChange={set("stage")}><option value="">All stages</option>{STAGES.map(s => <option key={s.id} value={s.id}>{s.name}</option>)}{ds === "principal" || ds === "overseer" || ds === "cto" ? <option value="called">Called</option> : null}</select>
       <select value={filt.district} onChange={set("district")}><option value="">{ds === "campaign" ? "All campaigns" : "All districts"}</option>{dOpts.map(d => <option key={d}>{d}</option>)}</select>
       <select value={filt.due} onChange={set("due")}><option value="">Any due date</option><option value="over">Due now</option></select>
       <select value={filt.email} onChange={set("email")}><option value="">Email: any</option><option value="yes">Has email</option><option value="no">Missing email</option></select>

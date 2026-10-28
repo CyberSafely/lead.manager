@@ -71,7 +71,7 @@ export function MapView() {
   return <div className="card">
     <div className="row" style={{ justifyContent: "space-between", alignItems: "flex-start", gap: 12, flexWrap: "wrap" }}>
       <div><h2 style={{ margin: "0 0 4px" }}>Missouri lead map</h2>
-        <div className="small muted">{total} {ds === "overseer" ? "overseers" : ds === "campaign" ? "campaign contacts" : ds === "pta" ? "PTA contacts" : ds === "user" ? "users" : ds === "affiliate" ? "affiliates" : "principals"} across {hit} of {feats.length} districts · click a district to filter Schools</div></div>
+        <div className="small muted">{total} {ds === "overseer" ? "overseers" : ds === "cto" ? "CTOs" : ds === "campaign" ? "campaign contacts" : ds === "pta" ? "PTA contacts" : ds === "user" ? "users" : ds === "affiliate" ? "affiliates" : "principals"} across {hit} of {feats.length} districts · click a district to filter Schools</div></div>
       <div className="row" style={{ alignItems: "center", gap: 8 }}><span className="small muted">fewer</span>
         <svg width="140" height="12" style={{ display: "block" }}><defs><linearGradient id="mapGrad" x1="0" x2="1"><stop offset="0" stopColor="hsl(220 70% 85%)" /><stop offset="1" stopColor="hsl(220 70% 30%)" /></linearGradient></defs><rect width="140" height="12" rx="2" fill="url(#mapGrad)" /></svg>
         <span className="small muted">more (max {max})</span></div>

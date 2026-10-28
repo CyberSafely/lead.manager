@@ -58,6 +58,7 @@ const LEADS: Lead[] = [
   { id: "call3", type: "pta", stage: "engaged", call: { note: "call back Tue", fundraising: true }, activity: [] },
   { id: "aff1", type: "affiliate", stage: "new", first: "Pat", last: "Example", handle: "pat.example", platform: "Instagram",
     followers: "12300", profileUrl: "https://www.instagram.com/pat.example/", activity: [] },
+  { id: "cto1", type: "cto", stage: "contacted", first: "Sam", last: "Example", jobtitle: "Chief Technology Officer", district: "Example R-I", email: "sam@example.org", activity: [] },
   { id: "odd1", stage: "nurture", seq: 3, email: null as any, futureField: { a: 1 }, other: "kept" } as any,   // null + unknown keys, no activity
   { id: "prin", type: "principal", stage: "active", call: { status: "unreach", prev: {} as any }, activity: [
     { ts: iso("2026-10-08T10:00:00Z"), type: "Call", note: "Unable to reach (voicemail)", extraKey: 1 } as any] },
