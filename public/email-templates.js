@@ -311,6 +311,28 @@ window.VAULT_TEMPLATES = {
    "file": "8 DM/DM5 · Thank-you + results check-in.md"
   },
   {
+   "id": "ct1",
+   "phase": "CTO",
+   "name": "CT1 · CTO warm-up before a call: MSBA offer (day 0)",
+   "to": "contacted",
+   "subject": "MSBA family offer for {{district}}: 15 minutes?",
+   "body": "Hi {{greeting}},\n\nI'm {{sender}} with CyberSafely.ai. I help Missouri districts with our MSBA family offer, and I'd like to set up a short call with you. I wanted to introduce myself first so you know what it's about.\n\nThe short version: through CyberSafely.ai's collaboration with MSBA, Missouri families of 5th through 9th graders can use CyberSafely.ai free for a full year. For the district, there's no contract, no MOU and no cost.\n\nIt's a parent app. Parents sign up, and parents get the alerts. The school's part is sharing a sign-up link with families.\n\nI'm reaching out to you because I'd like to hear how it would fit with your devices and setup, and follow up on any privacy or technical questions you have.\n\nWould you have 15 minutes in the next week or two? Just reply with a time that works, or point me to the right person on your team.\n\nThank you,\n{{sender}}\nCyberSafely.ai\n{{phone}} · {{sender_email}}",
+   "kind": "Email",
+   "file": "CTO/CT1 · CTO warm-up before a call - MSBA offer (day 0).md",
+   "seq": 1
+  },
+  {
+   "id": "ct2",
+   "phase": "CTO",
+   "name": "CT2 · CTO follow-up: no reply (day 4)",
+   "to": "contacted",
+   "subject": "Re: MSBA family offer for {{district}}: 15 minutes?",
+   "body": "Hi {{greeting}}, just bumping this in case it got buried. Is a 15-minute call in the next couple of weeks possible? If someone else handles family communications or app questions, I'm happy to reach out to them instead.\n\nThanks,\n{{sender}}",
+   "kind": "Email",
+   "file": "CTO/CT2 · CTO follow-up - no reply (day 4).md",
+   "seq": 2
+  },
+  {
    "id": "c1",
    "phase": "Calls",
    "name": "C1 · Call script: principal opened the email",
@@ -401,6 +423,7 @@ window.VAULT_TEMPLATES = {
   "6 · Users",
   "7 · Campaigns",
   "8 · DM",
+  "CTO",
   "Calls",
   "Family-facing"
  ],
@@ -983,6 +1006,48 @@ window.VAULT_TEMPLATES = {
    "md": "# DM5 · Thank-you + results check-in\n\n**Use case:** After the ambassador posts, and then monthly while they're active: thank them and share how their code is doing.\n\n**Before sending:** Update **Sign-ups from their link** in the drawer so `{{signups}}` is current. If there are none yet, drop that sentence.\n\n**When it's sent:** The affiliate is **Sharing our link** or **Driving sign-ups**. No stage change.\n\n## Subject\n\n_None (DM)._\n\n## Body\n\n```text\nHi {{greeting}}! Thank you so much for sharing CyberSafely with your community 💙 {{signups}} families have signed up with your code so far!\n\nHow is it going for your family? Anything you need from us for your next post?\n```\n\n## Why it's written this way\n\n- **Real numbers.** Showing results keeps ambassadors posting.\n- **Asks about their family first.** They're users too, and their experience is what they share.\n- **Honest.** Only send a number you've measured (the drawer says \"not yet measured\" until you enter one).\n"
   },
   {
+   "path": "CTO/CT1 · CTO warm-up before a call - MSBA offer (day 0).md",
+   "folder": "CTO",
+   "name": "CT1 · CTO warm-up before a call: MSBA offer (day 0)",
+   "id": "ct1",
+   "fm": {
+    "date": "2026-10-29",
+    "type": "draft",
+    "outcome": "02",
+    "status": "draft",
+    "template_id": "ct1",
+    "kind": "Email",
+    "phase": "CTO",
+    "stage_after_send": "Contacted",
+    "touch": "1",
+    "outbound": "true",
+    "audience": "Missouri district CTOs / technology directors",
+    "source": "[[2026-10-27 KC District CTO Call Script]]"
+   },
+   "md": "# CT1 · CTO warm-up before a call: MSBA offer (day 0)\n\n**Use case:** The first email to a district CTO or technology director on the **CTOs** list. It introduces you and the MSBA family offer before you call.\n\n**Goal:** the CTO knows who you are and what the call is about, and replies with a time.\n\n**Send to:** Missouri districts only (the MSBA offer doesn't apply in Kansas). `{{greeting}}` and `{{district}}` fill in from the CTO's record. Your name, phone and email come from Profile.\n\n**Stage after logging as sent:** Contacted. No reply in 4 business days → [[CT2 · CTO follow-up - no reply (day 4)]].\n\n## Subject\n\n```text\nMSBA family offer for {{district}}: 15 minutes?\n```\n\nA/B alternate: `Free year of CyberSafely.ai for {{district}} families (via MSBA)`. Don't use it until the offer wording is approved (claims-guard item 1).\n\n## Body\n\n```text\nHi {{greeting}},\n\nI'm {{sender}} with CyberSafely.ai. I help Missouri districts with our MSBA family offer, and I'd like to set up a short call with you. I wanted to introduce myself first so you know what it's about.\n\nThe short version: through CyberSafely.ai's collaboration with MSBA, Missouri families of 5th through 9th graders can use CyberSafely.ai free for a full year. For the district, there's no contract, no MOU and no cost.\n\nIt's a parent app. Parents sign up, and parents get the alerts. The school's part is sharing a sign-up link with families.\n\nI'm reaching out to you because I'd like to hear how it would fit with your devices and setup, and follow up on any privacy or technical questions you have.\n\nWould you have 15 minutes in the next week or two? Just reply with a time that works, or point me to the right person on your team.\n\nThank you,\n{{sender}}\nCyberSafely.ai\n{{phone}} · {{sender_email}}\n```\n\n## Optional line (only if confirmed)\n\nIf the district already received MSBA's email about the offer, add after the first paragraph:\n\n> \"You may have seen MSBA's note about this from [sender]. I'm the person helping districts get it to families.\"\n\n## Before sending\n\n- ⚠️ `approved-claims.md` is still UNAPPROVED. Torino needs to confirm: the MSBA offer (free year, grades 5–9), \"no contract, no MOU and no cost\", \"parents sign up, and parents get the alerts\", \"the school's part is sharing a sign-up link\", the collaboration wording, and the MSBA sender name in the optional line.\n- Set your phone and email in **Profile** so `{{phone}}` and `{{sender_email}}` don't show placeholders.\n\n---\n## claims-guard review · 2026-10-29\n**Verdict:** FAIL\n\n`approved-claims.md` is UNAPPROVED, so every product or offer claim below is a FAIL item: needs approval from Torino. Wording matches the 2026-10-27 call script, so the same approvals clear both.\n\n| # | Line / quote | Issue | Fix |\n|---|---|---|---|\n| 1 | \"Missouri families of 5th through 9th graders can use CyberSafely.ai free for a full year\" (also subject 2: \"Free year of CyberSafely.ai\") | Offer terms, eligibility and \"free\" are not in the approved list or the Partner Sales Guide ($150/year per student). Pricing beyond the guide. | Get Torino's written confirmation of the MSBA offer, grades and duration. Until then, send only subject 1 or remove the specifics. |\n| 2 | \"no contract, no MOU and no cost\" for the district | Unapproved terms. A CTO could hold us to it. | Needs Torino's confirmation before sending, or cut. |\n| 3 | \"It's a parent app. Parents sign up, and parents get the alerts.\" | Matches a pending candidate claim only. Not approved. | Needs approval, or reduce to \"a parent-subscribed app\". |\n| 4 | \"The school's part is sharing a sign-up link with families.\" | Unapproved description of the school's role and obligations. | Confirm with Torino that this is the whole ask. |\n| 5 | \"get you written answers to any privacy or technical questions\" | A commitment to \"any\" question in writing. Could be held to it. | Soften to \"and follow up on any privacy or technical questions you have\", and confirm someone owns written answers. (Done in the body above.) |\n| 6 | \"before anything goes out to families\" | Implies nothing reaches families until the district is consulted. This is a promise. | Confirm it matches MSBA's actual rollout, or drop it. (Not in the body above.) |\n| 7 | \"through CyberSafely.ai's collaboration with MSBA\" and the optional MSBA line | Partnership claim is unconfirmed. The sender name is a placeholder. | Torino to confirm the collaboration wording. Use the optional line only if verified. |\n\n**Passed:**\n- Entity: CyberSafely.ai is named throughout, with no Foundation mix-up.\n- PII: none. Contact details come from the Lead Manager.\n- Next step: a single ask (a 15-minute call), with the follow-up kept short.\n\n**Tone suggestions (not failing):**\n- CTOs will want a hint of substance, such as data handling or device and network impact. Offer to send a one-page privacy and technical summary only once one exists and is approved.\n- \"Reply with a time, or point me to the right person\" is two asks. It's acceptable, but \"reply with a time\" alone is cleaner.\n"
+  },
+  {
+   "path": "CTO/CT2 · CTO follow-up - no reply (day 4).md",
+   "folder": "CTO",
+   "name": "CT2 · CTO follow-up: no reply (day 4)",
+   "id": "ct2",
+   "fm": {
+    "date": "2026-10-29",
+    "type": "draft",
+    "outcome": "02",
+    "status": "draft",
+    "template_id": "ct2",
+    "kind": "Email",
+    "phase": "CTO",
+    "stage_after_send": "Contacted",
+    "touch": "2",
+    "outbound": "true",
+    "audience": "Missouri district CTOs / technology directors",
+    "source": "[[CT1 · CTO warm-up before a call - MSBA offer (day 0)]]"
+   },
+   "md": "# CT2 · CTO follow-up: no reply (day 4)\n\n**Use case:** A short bump when a CTO hasn't replied to [[CT1 · CTO warm-up before a call - MSBA offer (day 0)]] after 4 business days. Send it as a reply in the same thread if you can, so the first email sits underneath.\n\n**Stage after logging as sent:** Contacted. Still no reply → call with the CTO call script ([[2026-10-27 KC District CTO Call Script]]).\n\n## Subject\n\n```text\nRe: MSBA family offer for {{district}}: 15 minutes?\n```\n\n## Body\n\n```text\nHi {{greeting}}, just bumping this in case it got buried. Is a 15-minute call in the next couple of weeks possible? If someone else handles family communications or app questions, I'm happy to reach out to them instead.\n\nThanks,\n{{sender}}\n```\n"
+  },
+  {
    "path": "Calls/C1 · Call script - principal opened the email.md",
    "folder": "Calls",
    "name": "C1 · Call script: principal opened the email",
@@ -1154,6 +1219,6 @@ window.VAULT_TEMPLATES = {
    "md": "# P1 · Family message (forwarded by the school)\n\n**Use case:** The message the school forwards to its 5th–9th grade families.\n\n**When it's sent:** Never sent on its own. It is inserted into E1 and F1 as `{{parent_email}}`.\n\n**Why:** This is what actually drives sign-ups. Families see it as coming from their school, with the school's sign-up link in it.\n\n**Stage after logging as sent:** no change\n\n## Notes\n\n- Used in [[E1 · First email + family message (day 0)]] and [[F1 · Interested - next steps]].\n- Contains product claims (alerts, cyberbullying, never collects passwords). These **need approval** while the approved-claims list is UNAPPROVED.\n\n## Subject\n\n```text\nFree for {{school}} families: a year of CyberSafely.ai\n```\n\nA/B alternate: `A message from {{school}}: a free online-safety resource`\n\n## Body\n\n```text\nDear {{school}} families,\n\nWe want every 5th–9th grade family at {{school}} to know about a free resource now available to you.\n\nCyberSafely.ai is a parent app that alerts you early if something concerning comes up in your child's online life, like bullying, grooming, sextortion or exposure to harmful content, so you can step in before it escalates.\n\nIt's built to support your judgment, not replace it. It doesn't read your child's private messages or store their passwords. It watches for warning signs and lets you know.\n\nThanks to a collaboration between CyberSafely.ai and MSBA, Missouri families of 5th–9th graders get one full year free.\n\nGetting started takes a few minutes:\n1. Sign up here: {{signup_link}}\n2. Add your child.\n\nThat's it.\n\nWant a hand? Step-by-step instructions, a short video and free live onboarding calls are here: {{onboarding_page}}\n\nQuestions? Reach the CyberSafely.ai team at {{support}}.\n```\n\n## What changed and why\n\n- **Rebuilt from the company's parent email** ([[Outreach email 3]]), which Mike Nutter's team wrote and MSBA reviewed.\n- **Leads with what the parent gets**, then deals with the main worry (privacy: \"support your judgment, not replace it\").\n- **Subject puts \"Free\" and the school name first.** Parents open messages from their school.\n- \"Mike Nutter of Cybersafely and MSBA\" became \"CyberSafely.ai and MSBA\". Parents don't know Mike, but MSBA carries the credibility. ⚠️ Confirm with Torino that the collaboration is with CyberSafely.ai, not the CyberSafely Foundation.\n- ⚠️ Every product line here (alerts, what it detects, no private messages or passwords) is from company emails but **needs approval** while the approved-claims list is UNAPPROVED.\n\n## Refinement notes\n\n- \n\n## Previous version (from the app, Oct 8)\n\n<details><summary>Show</summary>\n\n```text\nSubject: Free online-safety app for {{school}} families\n\nDear {{school}} families,\n\nWe're sharing a free resource for families of 5th through 9th graders.\n\nThrough a collaboration between CyberSafely.ai and MSBA, Missouri families of 5th–9th graders can use CyberSafely.ai free for one year. CyberSafely.ai is a parent app that alerts you when your child may be facing something serious online, like cyberbullying, so you can step in early. It never collects your child's passwords.\n\nGetting started takes a few minutes:\n1. Sign up on the web with this link: {{signup_link}}\n2. Add your child and set up the app on their device.\n\nNeed help? Step-by-step instructions, a short video and free live onboarding calls are here: {{onboarding_page}}\n\nQuestions? Contact the CyberSafely.ai team at {{support}}.\n```\n\n</details>\n\n---\nAfter refining, paste the subject and body back into the Outreach Manager (Templates tab). See [[Email Flow]].\n"
   }
  ],
- "version": "4e36e0337050",
- "generated": "2026-10-27T15:12:19"
+ "version": "a345ad1b0c77",
+ "generated": "2026-10-29T12:47:19"
 };

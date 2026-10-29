@@ -70,6 +70,9 @@ export function nextFor(l: Lead): [string, number | null] | null {
   const s = l.stage, q = l.seq || 0;
   const c = callPending(l); if (c && s !== "lost") return [c.next.replace(c.tpl.toUpperCase(), callTpl(l, c).toUpperCase()), 1];
   if (l.type === "affiliate") return affNext(l);
+  // CTOs: warm-up email (CT1), a bump after 4 workdays (CT2), then a call
+  if (l.type === "cto" && s === "new") return ["Send CTO warm-up (CT1)", 0];
+  if (l.type === "cto" && s === "contacted") return q <= 1 ? ["Day 4: no reply? Send the bump (CT2)", 4] : q === 2 ? ["Call with the CTO script", 4] : ["No reply: moves to Nurture", 4];
   if (s === "new") return l.type === "pta" ? ["Send PTA intro (PT1)", 0] : l.type === "user" ? ["Send check-in email (U1)", 0] : l.type === "campaign" ? ["Send a personal follow-up email", 0] : ["Send first email (E1)", 0];
   if (s === "contacted" && (l.type === "pta" || l.type === "user")) return ["No reply? Send a short personal follow-up", 5];
   if (s === "contacted") return q <= 1 ? ["Day 4: call. No answer → voicemail + E2", 4] : q === 2 ? ["Day 10: last email (E3)", 4] : ["No reply: moves to Nurture", 4];
@@ -87,6 +90,8 @@ export function suggestTpl(l: Pick<Lead, "stage"> & Partial<Lead>): string | nul
   const s = l.stage, q = l.seq || 0, sent = l.sent || [];
   const c = callPending(l as Lead); if (c) return callTpl(l, c);
   if (l.type === "affiliate") return affTpl(l);
+  if (l.type === "cto" && s === "new") return "ct1";
+  if (l.type === "cto" && s === "contacted") return q <= 1 ? "ct2" : null;
   if (s === "new") return isDist(l) ? "d1" : l.type === "pta" ? "pt1" : l.type === "user" ? "u1" : l.type === "campaign" ? null : "e1";
   if ((l.type === "pta" || l.type === "user") && s === "contacted") return null;
   if (s === "contacted") return q <= 1 ? "e2" : "e3";
