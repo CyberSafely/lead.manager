@@ -1,5 +1,5 @@
 // Missouri district map: leads per district as a heat map. Click a district to filter Schools.
-import { useMemo, useRef } from "react";
+import { useMemo, useRef, useState } from "react";
 import { DL, W, emptyFilt, goTo, render, ui } from "../store";
 import { esc, normD } from "../lib/helpers";
 import { LeadTable } from "../components/ui";
@@ -19,12 +19,20 @@ function project(feats: DistrictFeature[]) {
   const ox = (VW - dx * s) / 2, oy = (VH - dy * s) / 2;
   const px = (x: number) => ox + (x - minX) * kx * s, py = (y: number) => VH - oy - (y - minY) * s;
   const ringPath = (r: number[][]) => r.map(([x, y], i) => (i ? "L" : "M") + px(x).toFixed(1) + " " + py(y).toFixed(1)).join("") + "Z";
-  return feats.map(f => f.geometry.type === "Polygon" ? f.geometry.coordinates.map(ringPath).join("") : f.geometry.coordinates.map(p => p.map(ringPath).join("")).join(""));
+  const paths = feats.map(f => f.geometry.type === "Polygon" ? f.geometry.coordinates.map(ringPath).join("") : f.geometry.coordinates.map(p => p.map(ringPath).join("")).join(""));
+  // Each district's box on the map, for zooming in on it
+  const boxes = feats.map(f => {
+    let a = Infinity, b = Infinity, c = -Infinity, d = -Infinity;
+    rings(f.geometry).forEach(r => r.forEach(([x, y]) => { const X = px(x), Y = py(y); if (X < a) a = X; if (X > c) c = X; if (Y < b) b = Y; if (Y > d) d = Y; }));
+    return [a, b, c, d];
+  });
+  return { paths, boxes };
 }
 
 export function MapView() {
   const data = window.MO_DISTRICTS;
-  const paths = useMemo(() => data?.features ? project(data.features) : [], [data]);
+  const { paths, boxes } = useMemo(() => data?.features ? project(data.features) : { paths: [], boxes: [] }, [data]);
+  const [q, setQ] = useState(""), [qOpen, setQOpen] = useState(false);
   const svgRef = useRef<SVGSVGElement>(null), tipRef = useRef<HTMLDivElement>(null);
   if (!data || !data.features) return <div className="card"><h2 style={{ marginTop: 0 }}>Map data not loaded</h2>
     <p><code>district-boundaries.js</code> wasn't found next to this file. It ships the Missouri school-district polygons (source: MO DESE / MSDIS). Reload once it's in the same folder as this HTML.</p></div>;
@@ -42,10 +50,24 @@ export function MapView() {
   const heat = (n: number) => { if (!n) return "var(--sx)"; const t = Math.min(1, n / max); return `hsl(220 70% ${85 - t * 55}%)`; };
   const total = counts.reduce((a, b) => a + b, 0), hit = counts.filter(n => n > 0).length;
   const ds = ui.ds;
-  // District picked on Analytics: outline it on the map and list who is in it underneath
-  const fN = normD(ui.mapFocus), inF = DL().filter(l => fN && normD(l.district) === fN);
+  // District picked in the search below the map, or on Analytics: highlight it and list who is in it underneath
+  const fN = normD(ui.mapFocus), picked = ui.mapFeat >= 0 && ui.mapFeat < feats.length ? feats[ui.mapFeat] : null;
+  const pCode = picked?.properties.code || "";
+  const inF = DL().filter(l => (pCode && String(l.districtId || "").trim() === pCode) || (fN && normD(l.district) === fN));
   const fCodes = new Set(inF.map(l => String(l.districtId || "").trim()).filter(Boolean));
-  const fIdx = fN ? feats.findIndex(f => (f.properties.code && fCodes.has(f.properties.code)) || normD(f.properties.name) === fN) : -1;
+  const fIdx = picked ? ui.mapFeat : fN ? feats.findIndex(f => (f.properties.code && fCodes.has(f.properties.code)) || normD(f.properties.name) === fN) : -1;
+  // Zoom: the district's box with some room around it, never closer than a fifth of the state
+  let vb = `0 0 ${VW} ${VH}`;
+  if (ui.mapZoom && fIdx >= 0) {
+    // Same shape as the full map, so the map keeps its size on screen
+    const [a, b, c, d] = boxes[fIdx], w = Math.max((c - a) * 1.6, (d - b) * 1.6 * VW / VH, VW / 5), h = w * VH / VW;
+    vb = `${((a + c) - w) / 2} ${((b + d) - h) / 2} ${w} ${h}`;
+  }
+  // Search: district names on the map, matched anywhere in the name (ignoring "School District", "R-II" spacing, etc.)
+  const qN = normD(q), hits = qN.length >= 2 ? feats.map((f, i) => ({ f, i, n: counts[i] })).filter(x => normD(x.f.properties.name).includes(qN) || normD(x.f.properties.county || "").startsWith(qN))
+    .sort((x, y) => (+normD(y.f.properties.name).startsWith(qN) - +normD(x.f.properties.name).startsWith(qN)) || x.f.properties.name.localeCompare(y.f.properties.name)).slice(0, 8) : [];
+  const choose = (i: number) => { ui.mapFeat = i; ui.mapFocus = feats[i].properties.name; ui.mapFromAna = false; ui.mapZoom = true; setQ(""); setQOpen(false); render(); };
+  const clearFocus = () => { ui.mapFocus = ""; ui.mapFeat = -1; ui.mapZoom = false; render(); };
 
   const onMove = (e: React.MouseEvent) => {
     const tip = tipRef.current!, svg = svgRef.current!;
@@ -65,7 +87,7 @@ export function MapView() {
     if (!nm) { const nd = normD(f.properties.name); const l = L.find(x => normD(x.district) === nd); if (l && l.district) nm = l.district; }
     if (!nm) nm = f.properties.name;
     // Show the whole district: every stage, no leftover search or filters (as Home's district click does)
-    ui.filt = { ...emptyFilt(), stage: "", district: nm }; ui.showAll = false; ui.view = "leads"; ui.pick = null; ui.mapFocus = ""; render();
+    ui.filt = { ...emptyFilt(), stage: "", district: nm }; ui.showAll = false; ui.view = "leads"; ui.pick = null; ui.mapFocus = ""; ui.mapFeat = -1; ui.mapZoom = false; render();
   };
 
   return <div className="card">
@@ -77,18 +99,27 @@ export function MapView() {
         <span className="small muted">more (max {max})</span></div>
     </div>
     <div style={{ position: "relative", marginTop: 12 }}>
-      <svg ref={svgRef} viewBox={`0 0 ${VW} ${VH}`} style={{ width: "100%", height: "auto", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 6, display: "block" }}
+      <svg ref={svgRef} viewBox={vb} style={{ width: "100%", height: "auto", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 6, display: "block" }}
         onMouseMove={onMove} onMouseLeave={() => { tipRef.current!.style.display = "none"; }} onClick={onClick}>
         {paths.map((d, i) => <path key={i} d={d} fill={heat(counts[i])} stroke="var(--line)" strokeWidth="0.5" data-i={i} data-n={counts[i]} />)}
-        {fIdx >= 0 ? <path d={paths[fIdx]} fill="none" stroke="var(--warn)" strokeWidth="3" style={{ pointerEvents: "none" }} /> : null}
+        {fIdx >= 0 ? <path className="map-focus" d={paths[fIdx]} style={{ pointerEvents: "none" }} vectorEffect="non-scaling-stroke" /> : null}
       </svg>
+      {fIdx >= 0 ? <button className="b sm" style={{ position: "absolute", top: 8, right: 8 }} onClick={() => { ui.mapZoom = !ui.mapZoom; render(); }}>{ui.mapZoom ? "Show all of Missouri" : "Zoom in"}</button> : null}
       <div ref={tipRef} style={{ position: "absolute", pointerEvents: "none", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 4, padding: "4px 8px", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,.15)", display: "none", zIndex: 2, whiteSpace: "nowrap" }}></div>
+    </div>
+    <div className="map-search" data-parity-skip>
+      <input type="search" placeholder="Find a district, e.g. Hazelwood" value={q} aria-label="Find a district on the map"
+        onChange={e => { setQ(e.target.value); setQOpen(true); }} onFocus={() => setQOpen(true)} onBlur={() => setTimeout(() => setQOpen(false), 150)}
+        onKeyDown={e => { if (e.key === "Enter" && hits[0]) choose(hits[0].i); if (e.key === "Escape") { setQ(""); setQOpen(false); } }} />
+      {qOpen && qN.length >= 2 ? <div className="map-hits">{hits.length ? hits.map(x => <button key={x.i} onMouseDown={e => e.preventDefault()} onClick={() => choose(x.i)}>
+        <b>{x.f.properties.name}</b><span className="small muted">{x.f.properties.county ? x.f.properties.county + " County · " : ""}{x.n} {x.n === 1 ? W().one : W().many}</span></button>)
+        : <div className="small muted" style={{ padding: "6px 10px" }}>No district matches "{q}".</div>}</div> : null}
     </div>
     {ui.mapFocus ? <div style={{ marginTop: 14 }} data-parity-skip>
       <div className="row"><h3 className="grow" style={{ margin: 0 }}>{ui.mapFocus} <span className="muted">· {inF.length} {inF.length === 1 ? W().one : W().many}{fIdx < 0 ? " · not found on the map" : ""}</span></h3>
         <button className="b sm" onClick={() => goTo({ view: "leads", label: ui.mapFocus, district: inF[0]?.district || ui.mapFocus })}>Open in {W().many} list</button>
-        <button className="b sm" onClick={() => { ui.view = "stats"; ui.mapFocus = ""; render(); }}>‹ Back to Analytics</button>
-        <button className="b sm" onClick={() => { ui.mapFocus = ""; render(); }}>Clear</button></div>
+        {ui.mapFromAna ? <button className="b sm" onClick={() => { clearFocus(); ui.view = "stats"; render(); }}>‹ Back to Analytics</button> : null}
+        <button className="b sm" onClick={clearFocus}>Clear</button></div>
       {inF.length ? <div style={{ marginTop: 8 }}><LeadTable arr={inF} compact /></div> : <p className="muted">No {W().many} in this district on this list.</p>}
     </div> : null}
   </div>;

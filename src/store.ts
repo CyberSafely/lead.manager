@@ -131,6 +131,10 @@ export const ui = {
   // (on top of their own filters) until cleared. Map: the district to highlight and list.
   pick: null as Picked | null,
   mapFocus: "",
+  // Map: the exact district shape picked in the search (-1 = match by name), zoomed in on it, and whether it came from Analytics
+  mapFeat: -1,
+  mapZoom: false,
+  mapFromAna: false,
 };
 export interface Picked { ids: string[]; label: string }
 
@@ -178,7 +182,7 @@ export function ctoOf(l: Lead) { return S.leads.find(o => isCto(o) && sameD(o, l
 export { isAff, isCamp, isCto, isDist, isOv, isPr, isPta, isUser };
 
 /* ---------- navigation ---------- */
-export function setView(v: View) { ui.view = v; ui.pick = null; ui.mapFocus = ""; render(); }
+export function setView(v: View) { ui.view = v; ui.pick = null; ui.mapFocus = ""; ui.mapFeat = -1; ui.mapZoom = false; render(); }
 export function setDs(v: ListId) {
   ui.ds = v; try { localStorage.setItem(KEY + "-ds", v); } catch (e) { /* */ }
   ui.filt = emptyFilt(); ui.callFilt = ""; ui.pick = null; closeDrawer();
@@ -196,7 +200,7 @@ export function goTo(g: Go) {
   ui.filt = { ...emptyFilt(), stage: g.stage || "", region: g.region || "", district: g.view === "leads" ? g.district || "" : "" };
   ui.callFilt = g.call || ""; ui.callLead = ""; ui.showAll = false;
   ui.pick = g.ids ? { ids: g.ids, label: g.label } : null;
-  ui.mapFocus = g.view === "map" ? g.district || "" : "";
+  ui.mapFocus = g.view === "map" ? g.district || "" : ""; ui.mapFeat = -1; ui.mapZoom = false; ui.mapFromAna = g.view === "map";
   ui.view = g.view; ui.openId = null; ui.bulk = null;
   if (g.ids?.length === 1 && g.view !== "map") ui.openId = g.ids[0];
   render(); window.scrollTo(0, 0);

@@ -408,3 +408,12 @@ button.b.ghost{border-color:transparent;background:transparent;color:var(--muted
 .rpt [data-go]:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
 /* Calls / Schools: the records picked on Analytics */
 .card.pick{margin-bottom:12px;border-left:3px solid var(--accent)}
+/* Map: the district picked in the search (or on Analytics), and the search under the map */
+.map-focus{fill:color-mix(in srgb,var(--warn) 55%,transparent);stroke:var(--warn);stroke-width:3;animation:mapPulse 1.6s ease-in-out 3}
+@keyframes mapPulse{50%{fill:color-mix(in srgb,var(--warn) 20%,transparent)}}
+@media (prefers-reduced-motion:reduce){.map-focus{animation:none}}
+.map-search{position:relative;margin-top:10px;max-width:420px}
+.map-search input{width:100%}
+.map-hits{position:absolute;left:0;right:0;top:100%;z-index:5;margin-top:2px;background:var(--panel);border:1px solid var(--line);border-radius:6px;box-shadow:0 4px 14px rgba(0,0,0,.18);overflow:hidden}
+.map-hits button{display:flex;justify-content:space-between;gap:10px;width:100%;padding:6px 10px;border:0;border-radius:0;background:none;color:var(--ink);text-align:left;cursor:pointer}
+.map-hits button:hover,.map-hits button:focus-visible{background:var(--hover)}
