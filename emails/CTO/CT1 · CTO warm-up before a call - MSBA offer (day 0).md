@@ -16,7 +16,7 @@ source: "[[2026-10-27 KC District CTO Call Script]]"
 
 **Use case:** The first email to a district CTO or technology director on the **CTOs** list. It introduces you and the MSBA family offer before you call.
 
-**Goal:** the CTO knows who you are and what the call is about, and replies with a time.
+**Goal:** the CTO understands what the app is and why it helps the school, wants it for their families, and replies with a time for a call.
 
 **Send to:** Missouri districts only (the MSBA offer doesn't apply in Kansas). `{{greeting}}` and `{{district}}` fill in from the CTO's record. Your name, phone and email come from Profile.
 
@@ -39,11 +39,13 @@ I'm {{sender}} with CyberSafely.ai. I help Missouri districts with our MSBA fami
 
 The short version: through CyberSafely.ai's collaboration with MSBA, Missouri families of 5th through 9th graders can use CyberSafely.ai free for a full year. For the district, there's no contract, no MOU and no cost.
 
-It's a parent app. Parents sign up, and parents get the alerts. The school's part is sharing a sign-up link with families.
+What the app does: CyberSafely.ai helps parents stay aware of what's happening in their child's digital world at home, on the child's own phone or tablet, where school filters don't reach. It uses AI to watch for warning signs like cyberbullying, sextortion, contact from strangers and self-harm language. When something looks serious, the parent gets an alert, so they can step in early. Parents sign up and parents get the alerts. The school doesn't monitor anything.
 
-I'm reaching out to you because I'd like to hear how it would fit with your devices and setup, and follow up on any privacy or technical questions you have.
+Why it matters for {{district}}: a lot of what lands on a principal's desk starts at home, at night, on a personal phone. A group chat turns into bullying, or a student is being pressured by someone online, and it walks into school the next morning. When a parent catches it early and deals with it at home, it's much less likely to become a school problem. It works alongside the filters and tools you already run on school devices.
 
-Would you have 15 minutes in the next week or two? Just reply with a time that works, or point me to the right person on your team.
+The school's part is sharing a sign-up link with families. We've already set up the links and written the parent message.
+
+I'd like to hear how this would fit with your devices and setup, and answer any privacy or technical questions you have. Would you have 15 minutes in the next week or two? Just reply with a time that works.
 
 Thank you,
 {{sender}}
@@ -60,6 +62,8 @@ If the district already received MSBA's email about the offer, add after the fir
 ## Before sending
 
 - ⚠️ `approved-claims.md` is still UNAPPROVED. Torino needs to confirm: the MSBA offer (free year, grades 5–9), "no contract, no MOU and no cost", "parents sign up, and parents get the alerts", "the school's part is sharing a sign-up link", the collaboration wording, and the MSBA sender name in the optional line.
+- ⚠️ **Added Oct 29 (product paragraphs), also unapproved:** "uses AI to watch for warning signs like cyberbullying, sextortion, contact from strangers and self-harm language", "the parent gets an alert", "on the child's own phone or tablet, where school filters don't reach", "the school doesn't monitor anything", "works alongside the filters and tools you already run", and "we've already set up the links and written the parent message" (check every school in the district has its link). Same wording family as D2, so one approval covers both. "Contact from strangers" is new: confirm the app detects it, or cut it.
+- The "why it matters" paragraph describes a common pattern, not a promise: keep "much less likely", don't change it to "prevents".
 - Set your phone and email in **Profile** so `{{phone}}` and `{{sender_email}}` don't show placeholders.
 
 ---
