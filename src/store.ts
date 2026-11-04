@@ -3,6 +3,7 @@
 // subscribe through useStore().
 import { useSyncExternalStore } from "react";
 import { DEFAULT_TEMPLATES } from "./lib/defaultTemplates";
+import { DEFAULT_RESOURCES, RES_SEED } from "./lib/defaultResources";
 import { KEY, TPL_VERSION, suggestTpl } from "./lib/pipeline";
 import { isAff, isCamp, isCto, isDist, isOv, isPr, isPta, isUser, sameD, schoolOf } from "./lib/helpers";
 import type { AppState, Lead, ListId, Template, VaultTemplates } from "./lib/types";
@@ -70,6 +71,14 @@ export function migrate(d: any): AppState {
     // v6 adds D1 for district overseers
     DEFAULT_TEMPLATES.forEach(t => { if (!d.templates.some((x: Template) => x.id === t.id)) d.templates.push({ ...t }); });
     d.tplVersion = TPL_VERSION;
+  }
+  // Seed the built-in resources once (by id). Edits and deletions stick: a seeded entry won't return unless RES_SEED
+  // is bumped. New installs and the cloud team all converge on the same set.
+  if ((d.resourceSeed || 0) < RES_SEED) {
+    d.resources = d.resources || [];
+    const have = new Set(d.resources.map((r: any) => r.id));
+    DEFAULT_RESOURCES.forEach(r => { if (!have.has(r.id)) d.resources.push({ ...r, updatedAt: new Date().toISOString() }); });
+    d.resourceSeed = RES_SEED;
   }
   syncVault(d);
   return d as AppState;

@@ -99,6 +99,7 @@ export interface AppState {
   vaultIds?: string[];
   settings: Settings;
   resources?: Resource[];
+  resourceSeed?: number;   // which built-in resources have been seeded (see defaultResources.ts)
   savedAt: string | null;
 }
 
