@@ -1,7 +1,7 @@
 // The right-hand drawer: one school / contact (LeadDrawer) or a bulk send (BulkDrawer).
 import { useEffect, useRef, useState } from "react";
 import { KEY, ACTS, CALLS, CALL_IDS, SEQ, STAGE, STAGES, callDef, suggestTpl } from "../lib/pipeline";
-import { S, W, closeDrawer, ctoOf, inDs, isAff, isCamp, isCto, isDist, isOv, isPta, isUser, lead, openLead, overseerOf, render, save, schoolsOf, tpl, ui } from "../store";
+import { S, W, closeDrawer, ctoOf, inDs, isAff, isCamp, isCto, isDist, isOv, isPta, isUser, lead, openLead, overseerOf, render, save, schoolsOf, showGraph, tpl, ui } from "../store";
 import { csvCell, dl, domainOf, dueClass, fmtDate, name, outlookUrl, placeholders, schoolOf, todayISO, campsOf } from "../lib/helpers";
 import { autoAdvance, fwd, log, logSent, render1, resetLead, setCall, setNext, setSignups, setStage, toHubspot, tokens } from "../lib/logic";
 import { AffDrawer } from "./AffDrawer";
@@ -38,7 +38,9 @@ function LeadDrawer({ l }: { l: Lead }) {
   const cd = callDef(l.call?.status);
 
   return <>
-    <div className="row"><h2 style={{ margin: 0 }} className="grow">{schoolOf(l)}</h2><button className="b sm" onClick={closeDrawer}>Close ✕</button></div>
+    <div className="row"><h2 style={{ margin: 0 }} className="grow">{schoolOf(l)}</h2>
+      {l.district || l.districtId ? <button className="b sm" title="See this district's relationship chart — overseer, schools and everyone in it" onClick={() => showGraph(l.district || "", l.districtId)}>Open graph</button> : null}
+      <button className="b sm" onClick={closeDrawer}>Close ✕</button></div>
     <div className="muted small">{name(l)}{l.district && l.school ? " · " + l.district : ""}</div>
     <div className="row small" style={{ marginTop: 4 }}><b style={{ fontSize: 15 }}><TelLink l={l} /></b><span><MailLink l={l} /></span></div>
     <div style={{ margin: "12px 0" }}><Stepper l={l} /></div>
