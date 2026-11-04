@@ -62,6 +62,12 @@ const LEADS: Lead[] = [
   { id: "odd1", stage: "nurture", seq: 3, email: null as any, futureField: { a: 1 }, other: "kept" } as any,   // null + unknown keys, no activity
   { id: "prin", type: "principal", stage: "active", call: { status: "unreach", prev: {} as any }, activity: [
     { ts: iso("2026-10-08T10:00:00Z"), type: "Call", note: "Unable to reach (voicemail)", extraKey: 1 } as any] },
+  // Extra people at the school (the influencer who picks up): round-trips through `extra`, like other unmapped fields
+  { id: "ppl1", type: "principal", stage: "contacted", first: "Pat", last: "Example", school: "Example High", district: "Example R-1",
+    contacts: [
+      { id: "c1", first: "Jordan", last: "Example", role: "Technology / IT", email: "jordan@example.org", ext: "214", primary: true },
+      { id: "c2", first: "Casey", role: "Guidance counselor", phone: "(555) 010-0002", notes: "best after 2pm" },
+    ], activity: [] },
 ];
 
 beforeAll(async () => {
@@ -83,6 +89,9 @@ describe("lead mapping (put_leads ⇄ leads_json)", () => {
     const imp = await get("imp1") as any;
     expect(imp.owner).toBe(""); expect("title_salutation" in imp).toBe(false);
     expect((await get("call2") as any).call).toEqual({});
+    const ppl = await get("ppl1") as any;
+    expect(ppl.contacts).toHaveLength(2);
+    expect(ppl.contacts[0]).toMatchObject({ id: "c1", role: "Technology / IT", ext: "214", primary: true });
   });
   it("derives report columns from activity text", async () => {
     const rows = await q("select lead_id, ord, to_stage, call_outcome, is_touch from public.lead_activities order by lead_id, ord");
