@@ -1,15 +1,15 @@
 // Sidebar: an icon rail on the left (like Supabase's). Hovering it, or tabbing into it, slides the labels out over the
 // page; the page itself never moves. Groups: work, reach, tools, and you at the bottom.
-import { BarChart3, BookOpen, CalendarCheck, Database, House, KanbanSquare, Mail, Map as MapIcon, Megaphone, Phone, School, UserRound, type LucideIcon } from "lucide-react";
+import { BarChart3, BookOpen, CalendarCheck, Database, House, KanbanSquare, Library, Mail, Map as MapIcon, Megaphone, Phone, School, Share2, UserRound, type LucideIcon } from "lucide-react";
 import { DL, setView, ui, type View } from "../store";
 import { todayISO } from "../lib/helpers";
 import shield from "../assets/shield-white.png";
 
 type Item = [View, string, LucideIcon];
 const GROUPS: Item[][] = [
-  [["dash", "Home", House], ["today", "Today", CalendarCheck], ["calls", "Calls", Phone], ["leads", "Schools", School], ["board", "Board", KanbanSquare], ["map", "Map", MapIcon]],
+  [["dash", "Home", House], ["today", "Today", CalendarCheck], ["calls", "Calls", Phone], ["leads", "Schools", School], ["board", "Board", KanbanSquare], ["map", "Map", MapIcon], ["graph", "Graph", Share2]],
   [["templates", "Emails", Mail], ["social", "Social", Megaphone], ["stats", "Analytics", BarChart3], ["data", "Data", Database]],
-  [["help", "Process", BookOpen]],
+  [["help", "Process", BookOpen], ["resources", "Resources", Library]],
 ];
 const BOTTOM: Item[] = [["profile", "Profile", UserRound]];
 

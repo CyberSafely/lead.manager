@@ -16,6 +16,7 @@ export function blank(): AppState {
       title: "Onboarding & Activation", sender_email: "", mailingAddress: "",
       report: { focus: "", wins: "", blockers: "", next: "", log: [] },
     },
+    resources: [],
     savedAt: null,
   };
 }
@@ -93,7 +94,7 @@ export let S: AppState = load();
 export function replaceState(d: AppState) { S = d; }
 
 /* ---------- screen state ---------- */
-export type View = "today" | "calls" | "leads" | "board" | "map" | "templates" | "dash" | "stats" | "data" | "help" | "profile" | "social";
+export type View = "today" | "calls" | "leads" | "board" | "map" | "graph" | "templates" | "dash" | "stats" | "data" | "help" | "profile" | "social" | "resources";
 export interface Filters { q: string; stage: string; district: string; due: string; email: string; level: string; grades: string; region: string }
 // Cold is selected by default: on start and whenever you switch lists
 export const emptyFilt = (): Filters => ({ q: "", stage: "new", district: "", due: "", email: "", level: "", grades: "", region: "" });
@@ -135,6 +136,9 @@ export const ui = {
   mapFeat: -1,
   mapZoom: false,
   mapFromAna: false,
+  // Graph (relationship chart): the district currently charted, so it survives leaving and coming back.
+  graphDistrict: "",
+  graphDistrictId: "",
 };
 export interface Picked { ids: string[]; label: string }
 
@@ -204,6 +208,11 @@ export function goTo(g: Go) {
   ui.view = g.view; ui.openId = null; ui.bulk = null;
   if (g.ids?.length === 1 && g.view !== "map") ui.openId = g.ids[0];
   render(); window.scrollTo(0, 0);
+}
+/** Open the relationship chart for a district (from the Map, a lead, or the Graph search). */
+export function showGraph(district: string, districtId?: string) {
+  ui.graphDistrict = district || ""; ui.graphDistrictId = districtId || "";
+  ui.view = "graph"; ui.openId = null; ui.bulk = null; ui.pick = null; render(); window.scrollTo(0, 0);
 }
 export function openLead(id: string) { ui.openId = id; ui.bulk = null; render(); }
 export function closeDrawer() { ui.openId = null; ui.bulk = null; render(); }
