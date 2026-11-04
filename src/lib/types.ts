@@ -17,6 +17,21 @@ export interface Call {
 
 export interface Families { signups?: string | number; activated?: string | number; asOf?: string }
 
+// Other people at the school/district: the influencer who actually picks up (tech overseer, counselor, "Dr."),
+// kept on the parent lead so they're tied to the same school/district and the same deal. The lead's own
+// first/last/email/phone stay the formal (principal) contact. `primary` just flags the one Giancarlo works most
+// (display only); it does not change who the email/call buttons target.
+export interface SchoolContact {
+  id: string;
+  first?: string; last?: string;
+  role?: string;     // Tech / Guidance counselor / Front office / Dr. / Other
+  email?: string;
+  phone?: string;    // a direct line, if there is one
+  ext?: string;      // extension
+  primary?: boolean; // the influencer — shown first and badged "Main contact"
+  notes?: string;
+}
+
 export interface Lead {
   id: string;
   type?: Exclude<ListId, "principal"> | "principal";
@@ -37,8 +52,18 @@ export interface Lead {
   families?: Families;
   nextAction?: string;
   nextDue?: string;
+  contacts?: SchoolContact[];   // additional people at this school/district
   activity?: Activity[];
   createdAt?: string;
+  updatedAt?: string;
+}
+
+// A reference note in the Resources tab (e.g. "What counts as an affiliate"). Team-shared in the cloud build.
+export interface Resource {
+  id: string;
+  title: string;
+  body: string;
+  tags?: string;      // comma-separated, for grouping
   updatedAt?: string;
 }
 
@@ -73,6 +98,7 @@ export interface AppState {
   vaultVersion?: string;
   vaultIds?: string[];
   settings: Settings;
+  resources?: Resource[];
   savedAt: string | null;
 }
 

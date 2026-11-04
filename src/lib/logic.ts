@@ -1,8 +1,8 @@
 // Merge fields and stage logic. Stage changes go through setStage() so they're logged and the next step is recomputed.
 import { S, ctoOf, overseerOf, save, schoolsOf, tpl } from "../store";
 import { CALLS, MAIN, callDef, nextFor, stg } from "./pipeline";
-import { addBiz, isDist, isPr, nowTs, schoolOf, todayISO } from "./helpers";
-import type { Lead, StageId } from "./types";
+import { addBiz, isDist, isPr, nowTs, schoolOf, todayISO, uid } from "./helpers";
+import type { Lead, SchoolContact, StageId } from "./types";
 
 /* ---------- merge fields ---------- */
 /** {{signup_link}} for an overseer: their district has one link per school (a default link would be wrong), so it's the
@@ -68,6 +68,14 @@ export function setNext(l: Lead) {
 }
 export function log(l: Lead, type: string, note?: string) {
   (l.activity = l.activity || []).push({ ts: nowTs(), type, note: note || "" }); l.updatedAt = new Date().toISOString();
+}
+// Add another person at this school/district (the influencer who actually picked up). Logs it to the history.
+export function addContact(l: Lead, c: Omit<SchoolContact, "id">): SchoolContact {
+  const person: SchoolContact = { id: uid(), ...c };
+  (l.contacts = l.contacts || []).push(person);
+  const who = [person.first, person.last].filter(Boolean).join(" ") || person.email || person.phone || "contact";
+  log(l, "Contact added", who + (person.role ? " (" + person.role + ")" : ""));
+  return person;
 }
 export function fwd(l: Lead, st: StageId) { return MAIN.indexOf(st) > MAIN.indexOf(l.stage) || l.stage === "nurture"; }
 // type "DM sent" for affiliates: the note also says who sent it, since several people DM from the team

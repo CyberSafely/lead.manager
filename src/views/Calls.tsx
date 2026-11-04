@@ -4,6 +4,7 @@ import { CALLS, CALL_IDS, KEY, callDef } from "../lib/pipeline";
 import { dueClass, fmtDate, name, schoolOf } from "../lib/helpers";
 import { fill, log, setCall } from "../lib/logic";
 import { Inp, MailLink, PickBanner, TelLink, css } from "../components/ui";
+import { QuickAddContact } from "../components/Contacts";
 import type { Lead } from "../lib/types";
 
 const SCRIPT_KEY = KEY + "-call-script";
@@ -58,7 +59,7 @@ export function Calls() {
         const c = l.call || {}, cd = callDef(c.status);
         return <tr key={l.id}>
           <td><b>{schoolOf(l)}</b> <button className="b sm" title="Show the call script with this person's name and district" onClick={() => pickLead(l.id)}>Script</button>{l.school && l.district ? <div className="small muted">{l.district}</div> : null}</td>
-          <td>{name(l)}<div style={{ fontSize: 15, fontWeight: 600 }}><TelLink l={l} /></div><div className="small"><MailLink l={l} /></div></td>
+          <td>{name(l)}<div style={{ fontSize: 15, fontWeight: 600 }}><TelLink l={l} /></div><div className="small"><MailLink l={l} /></div><QuickAddContact l={l} /></td>
           <td><select value={cd ? c.status : ""} style={{ width: "100%", ...(c.status && cd ? { borderLeft: `4px solid var(${cd.c})` } : {}) }}
             onChange={e => { setCall(lead(l.id)!, e.target.value); save(); }}>
             <option value="">— not called —</option>{CALL_IDS.map(k => <option key={k} value={k}>{CALLS[k].name}</option>)}</select>

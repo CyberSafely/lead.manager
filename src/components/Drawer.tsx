@@ -5,6 +5,7 @@ import { S, W, closeDrawer, ctoOf, inDs, isAff, isCamp, isCto, isDist, isOv, isP
 import { csvCell, dl, domainOf, dueClass, fmtDate, name, outlookUrl, placeholders, schoolOf, todayISO, campsOf } from "../lib/helpers";
 import { autoAdvance, fwd, log, logSent, render1, resetLead, setCall, setNext, setSignups, setStage, toHubspot, tokens } from "../lib/logic";
 import { AffDrawer } from "./AffDrawer";
+import { ContactsSection } from "./Contacts";
 import { Dot, FlashButton, Inp, MailLink, Ta, TelLink, TplOptions, Stepper, copy, cv } from "./ui";
 import type { Lead, ListId, StageId } from "../lib/types";
 
@@ -109,6 +110,7 @@ function LeadDrawer({ l }: { l: Lead }) {
       {inp("owner", "HubSpot owner")}{inp("hubspotId", "HubSpot record ID")}{inp("districtId", "District ID")}
       {isCamp(l) ? <>{inp("campaign", "Campaigns", "text", "Comma-separated")}{inp("state", "State")}</> : null}
     </div>
+    {isCamp(l) || isPta(l) || isUser(l) ? null : <ContactsSection l={l} />}
     <h3>Notes</h3>
     <Ta value={l.notes} placeholder="Context, objections, who to ask for. No student or family details." onCommit={v => { l.notes = v; done(); }} />
     <h3>History</h3>

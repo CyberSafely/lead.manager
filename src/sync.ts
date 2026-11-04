@@ -340,6 +340,10 @@ function applyState(st: StateRow | null, since: number) {
   const mine: Record<string, unknown> = {}; PERSONAL.forEach(k => { mine[k] = settingsOf()[k]; });
   S.settings = { ...teamSettings(st.settings), ...mine } as unknown as Settings;
   S.tplVersion = st.tpl_version ?? S.tplVersion; S.vaultVersion = st.vault_version ?? undefined; S.vaultIds = st.vault_ids ?? undefined;
+  // Other top-level state kept in the `extra` column (e.g. resources): apply it so teammates' changes show without a reload
+  const extra = (st.extra || {}) as Record<string, unknown>;
+  Object.keys(S).forEach(k => { if (!KNOWN_STATE.has(k) && !(k in extra)) delete (S as any)[k]; });
+  Object.entries(extra).forEach(([k, v]) => { if (!KNOWN_STATE.has(k)) (S as any)[k] = v; });
   return true;
 }
 
