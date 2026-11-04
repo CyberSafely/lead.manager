@@ -63,7 +63,8 @@ export function Graph() {
   // Every lead in the district, across all lists (principals, overseers, CTOs, …)
   const members = districtName || districtId ? S.leads.filter(inDist) : [];
   const schools = members.filter(isPr).sort((a, b) => schoolOf(a).localeCompare(schoolOf(b)));
-  const people = members.filter(l => isOv(l) || isCto(l)).sort((a, b) => (isOv(a) ? 0 : 1) - (isOv(b) ? 0 : 1) || name(a).localeCompare(name(b)));
+  const overseers = members.filter(isOv).sort((a, b) => name(a).localeCompare(name(b)));
+  const ctos = members.filter(isCto).sort((a, b) => name(a).localeCompare(name(b)));
   const other = members.filter(l => !isPr(l) && !isOv(l) && !isCto(l)).sort((a, b) => name(a).localeCompare(name(b)));
 
   // A signature of what the chart draws; the layout rebuilds only when it changes (so dragging sticks).
@@ -90,9 +91,21 @@ export function Graph() {
         del: () => { if (confirm("Delete " + name(l) + " (" + schoolOf(l) + ") and its history from the chart and your lists?")) { S.leads = S.leads.filter(x => x.id !== l.id); closeDrawer(); save(); } },
       },
     });
-    // District at the top; district-level people and each school hang beneath it.
-    const childLeads = [...people, ...schools, ...other];
-    const children = childLeads.map(leadNode);
+    // District → superintendent(s)/overseer(s) → the schools → each school's contacts.
+    // CTOs and any other district people sit alongside the overseer, under the district.
+    const schoolNodes = schools.map(leadNode);
+    let children: TNode[];
+    if (overseers.length) {
+      const ovNodes = overseers.map((o, i) => {
+        const n = leadNode(o);
+        if (i === 0) n.children = [...n.children, ...schoolNodes];   // schools hang off the lead overseer
+        return n;
+      });
+      children = [...ovNodes, ...ctos.map(leadNode), ...other.map(leadNode)];
+    } else {
+      // No superintendent on the chart yet: schools (and the rest) sit directly under the district.
+      children = [...ctos.map(leadNode), ...schoolNodes, ...other.map(leadNode)];
+    }
     const root: TNode = {
       id: "district", children, x: 0, y: 0,
       data: { kind: "district", accent: "var(--accent)", role: "District", title: districtName || "(unnamed district)", subtitle: `${schools.length} ${schools.length === 1 ? "school" : "schools"} · ${members.length} ${members.length === 1 ? "lead" : "leads"}` },
