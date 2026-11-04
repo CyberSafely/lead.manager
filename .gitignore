@@ -20,3 +20,7 @@ __pycache__/
 *.local.sh
 *.local.ts
 .vercel
+
+# Auto-deploy hook runtime files
+scripts/.auto-deploy.log
+scripts/.auto-deploy.lock
