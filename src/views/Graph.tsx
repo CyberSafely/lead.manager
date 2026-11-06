@@ -215,6 +215,15 @@ const ADD_ROLES: { v: ListId | "contact"; label: string; needsSchool?: boolean }
   { v: "cto", label: "District technology / CTO" },
   { v: "contact", label: "Another contact at a school", needsSchool: true },
 ];
+// Roles you meet at a school or district, offered as a dropdown (you can still type your own).
+// Receptionist is first: it's the front-office name Giancarlo asks for on every call.
+const SCHOOL_ROLES = [
+  "Receptionist", "Front office / secretary", "Office manager", "Administrative assistant",
+  "Principal", "Assistant principal", "Dean of students",
+  "Guidance counselor", "Technology / IT", "Teacher", "School nurse",
+  "Athletic director", "Librarian", "Social worker",
+  "Superintendent", "Assistant superintendent", "Other",
+];
 function splitName(n: string) { const p = n.trim().split(/\s+/).filter(Boolean); return { first: p[0] || "", last: p.slice(1).join(" ") }; }
 
 function AddPerson({ schools, startOpen }: { schools: Lead[]; startOpen?: boolean }) {
@@ -256,7 +265,8 @@ function AddPerson({ schools, startOpen }: { schools: Lead[]; startOpen?: boolea
         {schools.length ? schools.map(s => <option key={s.id} value={s.id}>{schoolOf(s)}</option>) : <option value="">No schools yet — add one first</option>}</select></div>
       : def.needsSchool ? <div style={{ marginTop: 6 }}><input value={f.school} onChange={set("school")} placeholder="School name" style={{ width: "100%" }} /></div> : null}
     <div className="row" style={{ gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-      <input value={f.title} onChange={set("title")} placeholder="Role / title (optional)" style={{ flex: "1 1 150px" }} />
+      <input list="cs-graph-roles" value={f.title} onChange={set("title")} placeholder="Role (e.g. Receptionist)" style={{ flex: "1 1 150px" }} />
+      <datalist id="cs-graph-roles">{SCHOOL_ROLES.map(r => <option key={r} value={r} />)}</datalist>
     </div>
     <div className="row" style={{ gap: 6, flexWrap: "wrap", marginTop: 6 }}>
       <input value={f.email} onChange={set("email")} placeholder="Email" style={{ flex: "1 1 150px" }} />
