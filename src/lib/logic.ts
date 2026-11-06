@@ -17,6 +17,20 @@ function schoolLinks(l: Partial<Lead>) {
   if (!ls.length) return "[no schools from this district in the Lead Manager yet]";
   return ls.map(s => `${s.school || s.district || "[school]"}: ${s.regLink || "[no sign-up link on file]"}`).join("\n");
 }
+/** A SchoolContact's display name, or "" if they have none. */
+function contactName(c?: SchoolContact) { return c ? `${c.first || ""} ${c.last || ""}`.trim() : ""; }
+/** The tech/online-safety overseer on a lead (contact whose role reads "Tech"/"safety"/"overseer"), if any. */
+function overseerContact(l: Partial<Lead>) { return (l.contacts || []).find(c => /tech|safety|overse/i.test(c.role || "")); }
+/** The front-office "gatekeeper" who answers the phone (role reads "front"/"office"/"desk"/"reception"/"secretary"/"admin"), if any. */
+function gatekeeperContact(l: Partial<Lead>) { return (l.contacts || []).find(c => /front|office|desk|reception|secretar|admin/i.test(c.role || "")); }
+/** {{call_intro}}: the "I already called" opening, rewritten to name whoever is on file. Soft fallback: when a lead has
+ *  no overseer and/or no front-office contact, the sentence stays true and names no one, never a blank or a placeholder. */
+function callIntro(l: Partial<Lead>, school: string, ov: string, gk: string) {
+  if (ov && gk) return `I recently called ${school} and spoke with ${gk}, who let me know that ${ov} is the person who oversees online safety for your students.`;
+  if (ov) return `I recently called ${school} to ask who oversees online safety for your students, and learned it's ${ov}.`;
+  if (gk) return `I recently called ${school} and spoke with ${gk} about who oversees online safety for your students.`;
+  return `I recently called ${school} to ask who oversees online safety for your students.`;
+}
 export function tokens(l: Partial<Lead>) {
   const sal = l.title_salutation;
   const t: Record<string, string | number> = {
@@ -32,6 +46,10 @@ export function tokens(l: Partial<Lead>) {
     code: l.code || "[referral code]", access_code: l.accessCode || "[access code]",
     signups: (l.families?.signups !== undefined && l.families.signups !== "") ? l.families.signups : "[number]",
   };
+  const ov = contactName(overseerContact(l)), gk = contactName(gatekeeperContact(l));
+  t.overseer = ov || "whoever oversees online safety";
+  t.gatekeeper = gk || "your front office";
+  t.call_intro = callIntro(l, String(t.school), ov, gk);
   const sub = (id: string) => { const x = tpl(id); return x ? x.body.replace(/\{\{(\w+)\}\}/g, (_, k) => String(t[k] ?? "")) : ""; };
   t.newsletter = sub("n1"); t.parent_email = sub("p1");
   return t;

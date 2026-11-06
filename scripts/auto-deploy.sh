@@ -22,8 +22,11 @@ trap 'rmdir "$LOCK" 2>/dev/null' EXIT
 
 echo "=== $(date '+%F %T') auto-deploy ==="
 
-# Keep the generated email file in sync so what we commit matches what we deploy.
-python3 scripts/sync-emails.py >/dev/null 2>&1 || true
+# public/email-templates.js is regenerated with a fresh "generated" timestamp on every
+# deploy, so it is always "changed" even when nothing real did. Discard that churn here so
+# it never makes a no-op commit or triggers a pointless deploy. Real email edits live in
+# emails/*.md (committed below) and npm run deploy rebuilds them into the deployed artifact.
+git checkout -q -- public/email-templates.js 2>/dev/null || true
 
 DIRTY="$(git status --porcelain)"
 UNPUSHED="$(git rev-list '@{u}..HEAD' 2>/dev/null | head -1 || true)"
@@ -43,6 +46,12 @@ if [ -n "$DIRTY" ]; then
   git commit -q -m "Auto-deploy $(date '+%Y-%m-%d %H:%M')" && echo "committed" || echo "commit skipped"
 fi
 
+# Push as the account that has access to the CyberSafely repo (the active gh account can
+# reset between sessions). Harmless if it is already active or gh is unavailable.
+gh auth switch --user explorevieques1 >/dev/null 2>&1 || true
+gh auth setup-git >/dev/null 2>&1 || true
 if git push origin HEAD; then echo "pushed"; else echo "PUSH FAILED"; fi
 if npm run deploy; then echo "deployed"; else echo "DEPLOY FAILED"; fi
+# The deploy just rewrote the email file's timestamp again — clear it so the tree stays clean.
+git checkout -q -- public/email-templates.js 2>/dev/null || true
 echo "=== done $(date '+%F %T') ==="
