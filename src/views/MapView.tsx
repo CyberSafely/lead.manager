@@ -1,6 +1,6 @@
 // Missouri district map: leads per district as a heat map. Click a district to filter Schools.
 import { useMemo, useRef, useState } from "react";
-import { DL, W, emptyFilt, goTo, render, ui } from "../store";
+import { DL, S, W, emptyFilt, goTo, render, save, ui } from "../store";
 import { esc, normD } from "../lib/helpers";
 import { LeadTable } from "../components/ui";
 import type { DistrictFeature } from "../lib/types";
@@ -38,16 +38,34 @@ export function MapView() {
     <p><code>district-boundaries.js</code> wasn't found next to this file. It ships the Missouri school-district polygons (source: MO DESE / MSDIS). Reload once it's in the same folder as this HTML.</p></div>;
 
   const feats = data.features, L = DL();
-  // Count leads per DESE district code and by normalized name.
+  // Count leads per DESE district code and by normalized name. Also count the "contacted" ones
+  // (anyone past the Cold/"new" stage) so we can tell which districts nobody has reached out to yet.
   const byCode: Record<string, number> = {}, byName: Record<string, number> = {};
+  const cByCode: Record<string, number> = {}, cByName: Record<string, number> = {};
   L.forEach(l => {
-    if (l.districtId) { const k = String(l.districtId).trim(); byCode[k] = (byCode[k] || 0) + 1; }
-    const n = normD(l.district); if (n) byName[n] = (byName[n] || 0) + 1;
+    const reached = l.stage !== "new";   // "new" is the Cold stage — not contacted yet
+    if (l.districtId) { const k = String(l.districtId).trim(); byCode[k] = (byCode[k] || 0) + 1; if (reached) cByCode[k] = (cByCode[k] || 0) + 1; }
+    const n = normD(l.district); if (n) { byName[n] = (byName[n] || 0) + 1; if (reached) cByName[n] = (cByName[n] || 0) + 1; }
   });
   const counts = feats.map(f => { const c = f.properties.code; if (c && byCode[c] != null) return byCode[c]; return byName[normD(f.properties.name)] || 0; });
+  // Contacted people per district, matched the same way as counts (prefer code)
+  const contacted = feats.map(f => { const c = f.properties.code; if (c && byCode[c] != null) return cByCode[c] || 0; return cByName[normD(f.properties.name)] || 0; });
   const max = Math.max(1, ...counts);
+  // Cold = this district has leads on this list but nobody has been contacted yet (orange when "Show cold" is on)
+  const isCold = (i: number) => counts[i] > 0 && contacted[i] === 0;
+  const coldCount = counts.reduce((a, _n, i) => a + (isCold(i) ? 1 : 0), 0);
   // Heat color: darker = more leads, in the accent blue family.
   const heat = (n: number) => { if (!n) return "var(--sx)"; const t = Math.min(1, n / max); return `hsl(220 70% ${85 - t * 55}%)`; };
+  // "Warm" districts (showed interest) are filled purple instead of the blue heat; still darker with more leads.
+  const dKey = (f: DistrictFeature) => (f.properties.code && String(f.properties.code).trim()) || normD(f.properties.name);
+  const warm = new Set(S.warmDistricts || []);
+  const isWarm = (i: number) => warm.has(dKey(feats[i]));
+  const warmColor = (n: number) => { const t = Math.min(1, n / max); return `hsl(270 60% ${78 - t * 42}%)`; };
+  const toggleWarm = (i: number) => {
+    const k = dKey(feats[i]); const w = new Set(S.warmDistricts || []);
+    if (w.has(k)) w.delete(k); else w.add(k);
+    S.warmDistricts = [...w]; save();
+  };
   const total = counts.reduce((a, b) => a + b, 0), hit = counts.filter(n => n > 0).length;
   const ds = ui.ds;
   // District picked in the search below the map, or on Analytics: highlight it and list who is in it underneath
@@ -96,24 +114,36 @@ export function MapView() {
         <div className="small muted">{total} {ds === "overseer" ? "overseers" : ds === "cto" ? "CTOs" : ds === "campaign" ? "campaign contacts" : ds === "pta" ? "PTA contacts" : ds === "user" ? "users" : ds === "affiliate" ? "affiliates" : "principals"} across {hit} of {feats.length} districts · click a district to filter Schools</div></div>
       <div className="row" style={{ alignItems: "center", gap: 8 }}><span className="small muted">fewer</span>
         <svg width="140" height="12" style={{ display: "block" }}><defs><linearGradient id="mapGrad" x1="0" x2="1"><stop offset="0" stopColor="hsl(220 70% 85%)" /><stop offset="1" stopColor="hsl(220 70% 30%)" /></linearGradient></defs><rect width="140" height="12" rx="2" fill="url(#mapGrad)" /></svg>
-        <span className="small muted">more (max {max})</span></div>
+        <span className="small muted">more (max {max})</span>
+        <span className="small muted" data-parity-skip style={{ display: "inline-flex", alignItems: "center", gap: 5, marginLeft: 10 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: "hsl(270 60% 58%)", display: "inline-block" }} /> warm</span>
+        <span className="small muted" data-parity-skip style={{ display: "inline-flex", alignItems: "center", gap: 5, marginLeft: 8 }}>
+          <span style={{ width: 12, height: 12, borderRadius: 2, background: "hsl(30 90% 55%)", display: "inline-block" }} /> cold</span></div>
     </div>
     <div style={{ position: "relative", marginTop: 12 }}>
       <svg ref={svgRef} viewBox={vb} style={{ width: "100%", height: "auto", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 6, display: "block" }}
         onMouseMove={onMove} onMouseLeave={() => { tipRef.current!.style.display = "none"; }} onClick={onClick}>
-        {paths.map((d, i) => <path key={i} d={d} fill={heat(counts[i])} stroke="var(--line)" strokeWidth="0.5" data-i={i} data-n={counts[i]} />)}
+        {paths.map((d, i) => <path key={i} d={d} fill={isWarm(i) ? warmColor(counts[i]) : (ui.mapCold && isCold(i)) ? "hsl(30 90% 55%)" : heat(counts[i])} stroke="var(--line)" strokeWidth="0.5" data-i={i} data-n={counts[i]} />)}
         {fIdx >= 0 ? <path className="map-focus" d={paths[fIdx]} style={{ pointerEvents: "none" }} vectorEffect="non-scaling-stroke" /> : null}
       </svg>
-      {fIdx >= 0 ? <button className="b sm" style={{ position: "absolute", top: 8, right: 8 }} onClick={() => { ui.mapZoom = !ui.mapZoom; render(); }}>{ui.mapZoom ? "Show all of Missouri" : "Zoom in"}</button> : null}
+      {fIdx >= 0 ? <div className="row" style={{ position: "absolute", top: 8, right: 8, gap: 6 }} data-parity-skip>
+        <button className="b sm" onClick={() => toggleWarm(fIdx)} aria-pressed={isWarm(fIdx)}>{isWarm(fIdx) ? "Unmark warm" : "Mark warm"}</button>
+        <button className="b sm" onClick={() => { ui.mapZoom = !ui.mapZoom; render(); }}>{ui.mapZoom ? "Show all of Missouri" : "Zoom in"}</button>
+      </div> : null}
       <div ref={tipRef} style={{ position: "absolute", pointerEvents: "none", background: "var(--panel)", border: "1px solid var(--line)", borderRadius: 4, padding: "4px 8px", fontSize: 12, boxShadow: "0 2px 8px rgba(0,0,0,.15)", display: "none", zIndex: 2, whiteSpace: "nowrap" }}></div>
     </div>
-    <div className="map-search" data-parity-skip>
-      <input type="search" placeholder="Find a district, e.g. Hazelwood" value={q} aria-label="Find a district on the map"
-        onChange={e => { setQ(e.target.value); setQOpen(true); }} onFocus={() => setQOpen(true)} onBlur={() => setTimeout(() => setQOpen(false), 150)}
-        onKeyDown={e => { if (e.key === "Enter" && hits[0]) choose(hits[0].i); if (e.key === "Escape") { setQ(""); setQOpen(false); } }} />
-      {qOpen && qN.length >= 2 ? <div className="map-hits">{hits.length ? hits.map(x => <button key={x.i} onMouseDown={e => e.preventDefault()} onClick={() => choose(x.i)}>
-        <b>{x.f.properties.name}</b><span className="small muted">{x.f.properties.county ? x.f.properties.county + " County · " : ""}{x.n} {x.n === 1 ? W().one : W().many}</span></button>)
-        : <div className="small muted" style={{ padding: "6px 10px" }}>No district matches "{q}".</div>}</div> : null}
+    <div className="row" data-parity-skip style={{ marginTop: 10, alignItems: "flex-start", gap: 8 }}>
+      <div className="map-search" style={{ marginTop: 0 }}>
+        <input type="search" placeholder="Find a district, e.g. Hazelwood" value={q} aria-label="Find a district on the map"
+          onChange={e => { setQ(e.target.value); setQOpen(true); }} onFocus={() => setQOpen(true)} onBlur={() => setTimeout(() => setQOpen(false), 150)}
+          onKeyDown={e => { if (e.key === "Enter" && hits[0]) choose(hits[0].i); if (e.key === "Escape") { setQ(""); setQOpen(false); } }} />
+        {qOpen && qN.length >= 2 ? <div className="map-hits">{hits.length ? hits.map(x => <button key={x.i} onMouseDown={e => e.preventDefault()} onClick={() => choose(x.i)}>
+          <b>{x.f.properties.name}</b><span className="small muted">{x.f.properties.county ? x.f.properties.county + " County · " : ""}{x.n} {x.n === 1 ? W().one : W().many}</span></button>)
+          : <div className="small muted" style={{ padding: "6px 10px" }}>No district matches "{q}".</div>}</div> : null}
+      </div>
+      <button className="b sm" onClick={() => { ui.mapCold = !ui.mapCold; render(); }} aria-pressed={ui.mapCold} style={{ whiteSpace: "nowrap" }}>
+        {ui.mapCold ? "Hide cold" : "Show cold"}</button>
+      {ui.mapCold ? <span className="small muted" style={{ alignSelf: "center" }}>{coldCount} {coldCount === 1 ? "district" : "districts"} not contacted yet</span> : null}
     </div>
     {ui.mapFocus ? <div style={{ marginTop: 14 }} data-parity-skip>
       <div className="row"><h3 className="grow" style={{ margin: 0 }}>{ui.mapFocus} <span className="muted">· {inF.length} {inF.length === 1 ? W().one : W().many}{fIdx < 0 ? " · not found on the map" : ""}</span></h3>

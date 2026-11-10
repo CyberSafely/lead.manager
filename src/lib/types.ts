@@ -100,6 +100,8 @@ export interface AppState {
   settings: Settings;
   resources?: Resource[];
   resourceSeed?: number;   // which built-in resources have been seeded (see defaultResources.ts)
+  // Map: districts marked "warm" (showed interest), filled purple. Keyed by DESE code when present, else normalized name.
+  warmDistricts?: string[];
   savedAt: string | null;
 }
 

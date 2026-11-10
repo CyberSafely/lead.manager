@@ -18,6 +18,7 @@ export function blank(): AppState {
       report: { focus: "", wins: "", blockers: "", next: "", log: [] },
     },
     resources: [],
+    warmDistricts: [],
     savedAt: null,
   };
 }
@@ -145,6 +146,8 @@ export const ui = {
   mapFeat: -1,
   mapZoom: false,
   mapFromAna: false,
+  // Map: "Show cold" highlights districts with leads but nobody contacted yet (orange), to see progress / who to call next
+  mapCold: false,
   // Graph (relationship chart): the district currently charted, so it survives leaving and coming back.
   graphDistrict: "",
   graphDistrictId: "",
