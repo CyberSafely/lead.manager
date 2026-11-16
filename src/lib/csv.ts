@@ -1,9 +1,9 @@
 // CSV import (HubSpot / cleaned lists), activity-log import, and exports. Everything stays in the browser.
 import { DL, S, W, save, tpl, ui } from "../store";
 import { CALLS, STAGE, STAGES, callDef } from "./pipeline";
-import { campsOf, csvCell, digits, fmtPhone, lastTouch, name, parseFollowers, profileUrlOf, setBase, touches, uid } from "./helpers";
-import { logSent, setCall, setNext } from "./logic";
-import type { Lead } from "./types";
+import { campsOf, csvCell, digits, fmtPhone, isPr, lastTouch, name, normD, parseFollowers, profileUrlOf, setBase, touches, uid } from "./helpers";
+import { log, logSent, setCall, setNext } from "./logic";
+import type { Lead, SchoolContact } from "./types";
 
 export function parseCsv(t: string) {
   const rows: string[][] = []; let r: string[] = [], f = "", q = false;
@@ -86,6 +86,9 @@ export function importCsv(text: string, camp: string) {
     followers: ex("follower count", "followers"), profileUrl: ex("link", "link to account", "profile link", "profile url", "url"),
   };
   if (ds === "affiliate" && C.handle < 0) return "Couldn't find a Username (or Social Media Handle) column.";
+  // A school contacts file (scripts/scrape-staff.mjs) would make every counselor and secretary a separate school
+  if (ds === "principal" && H.includes("role") && (H.includes("lead id") || H.includes("school")))
+    return "This looks like a school contacts file (it has a Role column), so nothing was imported. Use Import school contacts below: it adds these people to their school instead of making each one a new school.";
   if (C.email < 0 && C.first < 0 && C.full < 0) return "Couldn't find Email or First Name columns. Check the export.";
   let add = 0, upd = 0, skip = 0;
   const low = (s?: string) => (s || "").toLowerCase();
@@ -132,6 +135,51 @@ export function importCsv(text: string, camp: string) {
   const P = DL(), unowned = ds === "affiliate" ? 0 : P.filter(l => !l.owner).length, noEmail = P.filter(l => !l.email).length, noSchool = ds !== "principal" ? 0 : P.filter(l => !l.school).length;
   return `Added ${add}, updated ${upd}, skipped ${skip} empty rows.` + (unowned ? ` ${unowned} have no HubSpot owner.` : "") + (noEmail ? ` ${noEmail} have no email.` : "") +
     (noSchool ? ` ${noSchool} have no school name (only the district). Emails will say the district until you add it.` : "");
+}
+
+// School contacts (e.g. people found on a school's staff directory by scripts/scrape-staff.mjs): attach them to
+// a school that's already on the Principal list, so they show on the lead and under the school in the graph.
+// Never creates leads. Matches the school by Lead ID, else school name + district. Someone already on the school
+// (same email, or same first + last name) is skipped, so re-importing is safe. Each school gets one "Note" in its
+// history, which isn't an outreach touch, so touch counts and last-touch dates don't move.
+export interface ContactsResult { msg: string; unmatched: string[] }
+export function importContacts(text: string): ContactsResult {
+  const rows = parseCsv(text.replace(/^﻿/, ""));
+  if (rows.length < 2) return { msg: "No rows found.", unmatched: [] };
+  const H = rows[0].map(h => h.trim().toLowerCase());
+  const ix = (...n: string[]) => { for (const k of n) { const i = H.indexOf(k); if (i >= 0) return i; } return -1; };
+  const C = { lead: ix("lead id"), school: ix("school"), district: ix("district"), districtId: ix("district id"), first: ix("first name"), last: ix("last name"),
+    role: ix("role"), email: ix("email"), phone: ix("phone number", "phone"), ext: ix("ext", "extension"), notes: ix("notes") };
+  if (C.lead < 0 && C.school < 0) return { msg: "Need a School column (or Lead ID).", unmatched: [] };
+  if (C.email < 0 && C.first < 0 && C.last < 0) return { msg: "Need First Name / Last Name or Email columns.", unmatched: [] };
+  const low = (s?: string) => (s || "").trim().toLowerCase();
+  const normS = (s?: string) => low(s).replace(/\b(school|schools|the)\b/g, "").replace(/[^a-z0-9]/g, "");
+  const did = (s?: string) => String(s || "").trim().replace(/^0+/, "");
+  const pool = S.leads.filter(isPr);
+  const added = new Map<Lead, string[]>(), unmatched = new Set<string>();
+  let dup = 0, empty = 0;
+  for (const r of rows.slice(1)) {
+    const g = (k: keyof typeof C) => C[k] >= 0 ? (r[C[k]] || "").trim() : "";
+    const sch = g("school"), dist = g("district"), dId = did(g("districtId"));
+    const inDist = (l: Lead) => dId && l.districtId ? did(l.districtId) === dId : !dist || normD(l.district) === normD(dist);
+    const l = (g("lead") && pool.find(x => x.id === g("lead"))) ||
+      (sch ? (() => { const m = pool.filter(x => inDist(x) && (x.school || "").split(" / ").some(s => normS(s) === normS(sch))); return m.length === 1 ? m[0] : undefined; })() : undefined);
+    if (!l) { unmatched.add(sch ? sch + (dist ? " (" + dist + ")" : "") : g("lead")); continue; }
+    const c = { first: g("first"), last: g("last"), role: g("role"), email: low(g("email")), phone: g("phone"), ext: g("ext"), notes: g("notes") };
+    if (!c.email && !c.first && !c.last) { empty++; continue; }
+    const sameName = (p: { first?: string; last?: string }) => !!(c.first && c.last) && low(p.first) === low(c.first) && low(p.last) === low(c.last);
+    if ((c.email && (low(l.email) === c.email || (l.contacts || []).some(x => low(x.email) === c.email))) || sameName(l) || (l.contacts || []).some(sameName)) { dup++; continue; }
+    const person: SchoolContact = { id: uid() };
+    (Object.keys(c) as (keyof typeof c)[]).forEach(k => { if (c[k]) person[k] = c[k]; });
+    (l.contacts = l.contacts || []).push(person);
+    const who = [c.first, c.last].filter(Boolean).join(" ") || c.email;
+    added.set(l, [...(added.get(l) || []), who + (c.role ? " (" + c.role + ")" : "")]);
+  }
+  added.forEach((names, l) => log(l, "Note", `Added ${names.length} contact${names.length === 1 ? "" : "s"} from the school's website: ${names.join(", ")}`));
+  if (added.size) save();
+  const n = [...added.values()].reduce((a, b) => a + b.length, 0);
+  return { msg: `Added ${n} contact${n === 1 ? "" : "s"} to ${added.size} school${added.size === 1 ? "" : "s"}.` + (dup ? ` Skipped ${dup} already on the school.` : "") +
+    (empty ? ` Skipped ${empty} rows with no name or email.` : ""), unmatched: [...unmatched] };
 }
 
 // `note` lets the HubSpot test batch hold back call notes; the default is the full export, unchanged.

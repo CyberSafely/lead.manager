@@ -4,7 +4,7 @@ import { S, blank, replaceState, ui } from "../src/store";
 import { nextFor, suggestTpl } from "../src/lib/pipeline";
 import { addBiz, bizSince, fmtPhone, normD } from "../src/lib/helpers";
 import { affAdvance, fill, logSent, render1, resetLead, setCall, setSignups, setStage, tick } from "../src/lib/logic";
-import { familyFlag, hubspotBatch, importCsv, parseCsv, toCsv } from "../src/lib/csv";
+import { familyFlag, hubspotBatch, importContacts, importCsv, parseCsv, toCsv } from "../src/lib/csv";
 import { rptBody } from "../src/lib/report";
 import { postReminders, type Item, type Post } from "../src/social/data";
 import type { Lead } from "../src/lib/types";
@@ -83,6 +83,30 @@ describe("CSV", () => {
     expect(S.leads).toHaveLength(1);
     expect(S.leads[0]).toMatchObject({ email: "pat@example.org", school: "Example Middle", district: "Example District", nextAction: "Send first email (E1)" });
     expect(toCsv().split("\n")[1]).toContain("pat@example.org");
+  });
+  it("imports school contacts onto existing schools without creating leads or touches", () => {
+    S.leads.push(L({ id: "a", email: "pat@example.org", school: "Example Middle", district: "Example R-I", districtId: "12345" }),
+      L({ id: "b", first: "Sam", email: "sam@example.org", school: "Other High", district: "Other R-II", districtId: "54321" }));
+    const csv = "School,District,District ID,First Name,Last Name,Role,Email,Notes\n" +
+      "Example Middle School,Example R-I,012345,Lee,Sample,Guidance counselor,LEE@example.org,Website title: Counselor\n" +
+      "Example Middle,Example R-I,12345,Pat,Example,Principal,pat@example.org,\n" +          // the lead themself → skipped
+      "Example Middle,Example R-I,12345,Kim,Sample,Front office / secretary,,\n" +
+      "Nowhere High,Missing R-X,99999,Ann,Sample,Librarian,ann@example.org,\n";
+    const r = importContacts(csv);
+    expect(r.msg).toBe("Added 2 contacts to 1 school. Skipped 1 already on the school.");
+    expect(r.unmatched).toEqual(["Nowhere High (Missing R-X)"]);
+    expect(S.leads).toHaveLength(2);
+    const a = S.leads.find(l => l.id === "a")!;
+    expect(a.contacts).toMatchObject([{ first: "Lee", last: "Sample", role: "Guidance counselor", email: "lee@example.org", notes: "Website title: Counselor" },
+      { first: "Kim", last: "Sample", role: "Front office / secretary" }]);
+    expect(a.contacts![1].email).toBeUndefined();
+    expect((a.activity || []).map(x => x.type)).toEqual(["Note"]);       // one note, not a touch
+    expect(S.leads.find(l => l.id === "b")!.contacts).toBeUndefined();
+    expect(importContacts(csv).msg).toBe("Added 0 contacts to 0 schools. Skipped 3 already on the school.");
+    expect(a.contacts).toHaveLength(2);
+    // the regular Principal import refuses a contacts file instead of making each person a school
+    expect(importCsv(csv, "")).toMatch(/^This looks like a school contacts file/);
+    expect(S.leads).toHaveLength(2);
   });
   it("imports affiliates by username + platform, with follower counts and names", () => {
     ui.ds = "affiliate";

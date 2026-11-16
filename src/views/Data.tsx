@@ -3,7 +3,7 @@ import { useRef, useState } from "react";
 import { DL, S, W, inDs, load, migrate, openLead, replaceState, render, save, ui } from "../store";
 import { KEY } from "../lib/pipeline";
 import { dl, name, todayISO } from "../lib/helpers";
-import { aggCsv, applyActivityLog, familyFlag, hubspotBatch, importCsv, toCsv, type LogResult } from "../lib/csv";
+import { aggCsv, applyActivityLog, familyFlag, hubspotBatch, importContacts, importCsv, toCsv, type ContactsResult, type LogResult } from "../lib/csv";
 import { filtered } from "./Leads";
 import { log, setNext } from "../lib/logic";
 
@@ -37,6 +37,7 @@ export function Data() {
   const campRef = useRef<HTMLInputElement>(null);
   const [csvOut, setCsvOut] = useState("");
   const [actOut, setActOut] = useState<LogResult | null>(null);
+  const [conOut, setConOut] = useState<ContactsResult | null>(null);
 
   return <>
     <div className="banner"><b>Working on: {ds === "affiliate" ? "Affiliates (social media)" : ds === "user" ? "App users (retention)" : ds === "pta" ? "PTA contacts" : ds === "campaign" ? "Campaigns (newsletter contacts)" : ds === "overseer" ? "District overseers" : ds === "cto" ? "District CTOs (technology leaders)" : "Principals"}.</b> Import, export and reset below apply to this list only. Switch lists at the top of the page.</div>
@@ -77,6 +78,15 @@ export function Data() {
         <div className="small" style={{ marginTop: 8 }}>{actOut ? <>{actOut.msg}
           {actOut.missing.length ? <div className="over">No match for: {actOut.missing.join(", ")}. Check the spelling against the Schools list.</div> : null}
           {actOut.bad.length ? <div className="over">Unknown email IDs: {actOut.bad.join(", ")}.</div> : null}</> : null}</div></div>
+
+      {ds === "principal" ? <div className="card" data-parity-skip><h2 style={{ marginTop: 0 }}>Import school contacts (CSV)</h2>
+        <p className="small muted">Adds people at a school (counselors, assistant principals, front office…) to that school's lead as contacts, so they show on the lead and in the graph. It never creates schools. Columns: <code>School</code> <code>District ID</code> or <code>District</code> (or <code>Lead ID</code>), <code>First Name</code> <code>Last Name</code> <code>Role</code> <code>Email</code>, and if present <code>Phone</code> <code>Notes</code>. Someone already on the school is skipped, so re-importing is safe. A backup downloads first.</p>
+        <input type="file" accept=".csv,text/csv" onChange={e => {
+          const f = e.target.files?.[0]; if (!f) return;
+          f.text().then(t => { backup(`outreach-backup-before-contacts-${todayISO()}.json`); setConOut(importContacts(t)); e.target.value = ""; render(); });
+        }} />
+        <div className="small" style={{ marginTop: 8 }}>{conOut ? <>{conOut.msg}
+          {conOut.unmatched.length ? <div className="over">No school on the Principal list for: {conOut.unmatched.join(", ")}. Import the school first, or check its name and District ID.</div> : null}</> : null}</div></div> : null}
 
       <div className="card"><h2 style={{ marginTop: 0 }}>Back up / restore</h2>
         <p className="small muted">Full copy of schools, history and emails as JSON.</p>
