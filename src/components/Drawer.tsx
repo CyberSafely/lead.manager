@@ -33,7 +33,8 @@ function LeadDrawer({ l }: { l: Lead }) {
   const done = () => { l.updatedAt = new Date().toISOString(); save(); };
 
   const inp = (k: keyof Lead, lab: string, type = "text", ph = "") => <>
-    <label>{lab}</label><Inp type={type} value={l[k] as string} placeholder={ph} onCommit={v => { (l as unknown as Record<string, string>)[k] = v; done(); }} /></>;
+    <label>{lab}</label><Inp type={type} value={l[k] as string} placeholder={ph} onCommit={v => { (l as unknown as Record<string, string>)[k] = v; if (k === "email") delete l.emailInferred; done(); }} />
+    {k === "email" && l.emailInferred && l.email ? <div className="small muted">Inferred from the district's email pattern, not published. Confirm it, then edit or re-save to mark it confirmed.</div> : null}</>;
   const r = render1(pick, l), prevText = (r.s ? "Subject: " + r.s + "\n\n" : "") + r.b, ph = placeholders(r.s + r.b);
   const cd = callDef(l.call?.status);
 

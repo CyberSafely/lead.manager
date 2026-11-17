@@ -22,6 +22,7 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
+import { districtPeople, inferEmail, inferNote, learnPattern } from "./lib/emailPattern.mjs";
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const arg = n => { const i = process.argv.indexOf("--" + n); return i < 0 ? "" : process.argv[i + 1] || ""; };
@@ -48,7 +49,7 @@ const ORDER = ["Guidance counselor", "Safety / security", "Technology / IT"];
 
 // District office mode: only the people who lead technology or safety for the whole district
 const office = arg("office");
-const OFFICE_KEYWORDS = ["technology", "information", "chief", "safety", "security", "prevention", "superintendent", "student services", "counseling"];
+const OFFICE_KEYWORDS = ["technology", "information", "chief", "safety", "security", "prevention", "superintendent", "student services", "student support", "secondary", "counseling"];
 const officeRoleOf = title => {
   if (/secretary|clerk|administrative ass|assistant to|technician|\baide\b|para|safety officer|security officer|resource officer|police|guard|transport/i.test(title)) return undefined;
   if (/chief (technology|information)|\bCTO\b|\bCIO\b|technolog|information (systems|services|technology)/i.test(title) && /chief|director|executive|officer|\bCTO\b|\bCIO\b/i.test(title)) return "Technology";
@@ -196,9 +197,22 @@ for (const t of targets) {
 await browser.close();
 
 rows.sort((a, b) => a.School.localeCompare(b.School) || ORDER.indexOf(a.Role) - ORDER.indexOf(b.Role));
+
+// Missing emails: build them from the district's address format, learned from the emails already in --leads plus the
+// ones just found (HubSpot matches people by email, so a phone-only person can't be linked). Marked as inferred.
+const pat = learnPattern([...districtPeople(leads, districtId), ...rows.filter(r => r.Email).map(r => ({ first: r["First Name"], last: r["Last Name"], email: r.Email }))]);
+let inferred = 0;
+for (const r of rows) {
+  r["Email Inferred"] = "";
+  if (r.Email || !pat) continue;
+  const e = inferEmail(pat, r["First Name"], r["Last Name"]);
+  if (e) { r.Email = e; r["Email Inferred"] = "yes"; r.Notes += " " + inferNote(pat); inferred++; }
+}
+if (!leads.length) console.log("note: no --leads given, so missing emails can't be inferred from the district's existing ones");
+else console.log(pat ? `district email format: ${pat.pattern}@${pat.domain} (${pat.matches} of ${pat.total} known emails fit) · emails inferred: ${inferred}` : "district email format: no clear format in the known emails, nothing inferred");
 const cell = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
-const head = ctoOut ? ["District ID", "District", "First Name", "Last Name", "Email", "Phone Number", "Job Title", "Notes"]
-  : ["Lead ID", "School", "District", "District ID", "First Name", "Last Name", "Role", "Email", "Phone", "Notes"];
+const head = ctoOut ? ["District ID", "District", "First Name", "Last Name", "Email", "Email Inferred", "Phone Number", "Job Title", "Notes"]
+  : ["Lead ID", "School", "District", "District ID", "First Name", "Last Name", "Role", "Email", "Email Inferred", "Phone", "Notes"];
 if (ctoOut) {   // CTO-list rows: the website title is the job title
   const dName = districtArg || leads.find(l => String(l.districtId || "").replace(/^0+/, "") === districtId)?.district || "";
   rows.forEach(r => { r.District = dName; r["Phone Number"] = r.Phone; r["Job Title"] = (r.Notes.match(/^Website title: (.*?)\. Found/) || [])[1] || r.Role; });
@@ -212,5 +226,5 @@ console.log(`useful contacts: ${rows.length}  (${Object.entries(by).map(([k, v])
 console.log(`skipped: ${stats.otherRoles} other roles, ${stats.isLead} already the school's lead, ${stats.wrongPlace} listed at another location`);
 if (stats.otherRoles) console.log("  titles skipped: " + Object.entries(otherTitles).sort((a, b) => b[1] - a[1]).map(([t, n]) => `${n}× ${t}`).join("; "));
 console.log(`with phone: ${rows.filter(r => r.Phone).length} of ${rows.length}`);
-console.log(`with email: ${rows.filter(r => r.Email).length} of ${rows.length} · with a Lead ID: ${rows.filter(r => r["Lead ID"]).length}`);
+console.log(`with email: ${rows.filter(r => r.Email).length} of ${rows.length} (${inferred} inferred) · with a Lead ID: ${rows.filter(r => r["Lead ID"]).length}`);
 console.log(`wrote ${path.relative(ROOT, out)}`);

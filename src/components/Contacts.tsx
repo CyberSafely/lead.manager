@@ -69,7 +69,7 @@ function Row({ l, c }: { l: Lead; c: SchoolContact }) {
     </div>
     <div style={{ marginTop: 6 }}>{roleInput(c.role, v => { c.role = v; done(); })}</div>
     <div className="row" style={{ gap: 6, flexWrap: "wrap", marginTop: 6 }}>
-      <Inp value={c.email} type="email" placeholder="Email" style={{ flex: "2 1 180px" }} onCommit={v => { c.email = v; done(); }} />
+      <Inp value={c.email} type="email" placeholder="Email" style={{ flex: "2 1 180px" }} onCommit={v => { c.email = v; delete c.emailInferred; done(); }} />
       <Inp value={c.ext} placeholder="Ext." style={{ flex: "0 1 80px" }} onCommit={v => { c.ext = v; done(); }} />
     </div>
     <div className="row" style={{ marginTop: 6 }}>
@@ -78,6 +78,7 @@ function Row({ l, c }: { l: Lead; c: SchoolContact }) {
     <div className="row small" style={{ marginTop: 6 }}>
       {c.phone ? <a href={`tel:+1${digits(c.phone)}`}>{fmtPhone(c.phone)}{c.ext ? " ×" + c.ext : ""}</a> : null}
       {c.email ? <a href={`mailto:${encodeURIComponent(c.email)}`}>{c.email}</a> : null}
+      {c.email && c.emailInferred ? <span className="muted" title="Built from the district's email pattern, not published. Edit the email to mark it confirmed.">(inferred)</span> : null}
     </div>
     <Inp value={c.notes} placeholder="Note (no student or family details)" style={{ width: "100%", marginTop: 6 }} onCommit={v => { c.notes = v; done(); }} />
   </div>;

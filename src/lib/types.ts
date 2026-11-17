@@ -30,6 +30,7 @@ export interface SchoolContact {
   ext?: string;      // extension
   primary?: boolean; // the influencer — shown first and badged "Main contact"
   notes?: string;
+  emailInferred?: boolean;   // email built from the district's address pattern, not published: confirm before relying on it
 }
 
 export interface Lead {
@@ -53,6 +54,7 @@ export interface Lead {
   nextAction?: string;
   nextDue?: string;
   contacts?: SchoolContact[];   // additional people at this school/district
+  emailInferred?: boolean;      // email built from the district's address pattern (not published); cleared when someone edits it
   activity?: Activity[];
   createdAt?: string;
   updatedAt?: string;

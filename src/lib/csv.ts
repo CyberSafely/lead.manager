@@ -84,7 +84,10 @@ export function importCsv(text: string, camp: string) {
     // Affiliates (social media)
     handle: ex("username", "handle", "social media handle", "account"), platform: ex("platform"),
     followers: ex("follower count", "followers"), profileUrl: ex("link", "link to account", "profile link", "profile url", "url"),
+    // "yes" when the email was built from the district's address pattern (scripts/scrape-staff.mjs), not published
+    emailInferred: ex("email inferred"),
   };
+  const yes = (v: string) => /^(y|yes|true|1)$/i.test(v.trim());
   if (ds === "affiliate" && C.handle < 0) return "Couldn't find a Username (or Social Media Handle) column.";
   // A school contacts file (scripts/scrape-staff.mjs) would make every counselor and secretary a separate school
   if (ds === "principal" && H.includes("role") && (H.includes("lead id") || H.includes("school")))
@@ -125,9 +128,13 @@ export function importCsv(text: string, camp: string) {
     const exl = ds === "affiliate" ? (rec.handle ? pool.find(l => low(l.handle) === low(rec.handle) && low(l.platform) === low(rec.platform)) : undefined) : pool.find(l => (rec.hubspotId && l.hubspotId === rec.hubspotId) || (rec.email && l.email === rec.email))
       || (rec.first && pool.find(l => low(l.first) === low(rec.first) && low(l.last) === low(rec.last) && low(l.district) === low(rec.district)));
     if (camp) rec.campaign = exl ? [...new Set([...campsOf(exl), camp])].join(", ") : camp;
-    if (exl) { const x = exl as unknown as Record<string, unknown>; for (const k of Object.keys(rec)) if (rec[k] && k !== "notes") x[k] = rec[k]; if (rec.notes && !exl.notes) exl.notes = rec.notes; upd++; }
+    const guessed = rec.email ? yes(g("emailInferred")) : undefined;   // only meaningful when this row sets an email
+    if (exl) { const before = low(exl.email); const x = exl as unknown as Record<string, unknown>; for (const k of Object.keys(rec)) if (rec[k] && k !== "notes") x[k] = rec[k]; if (rec.notes && !exl.notes) exl.notes = rec.notes;
+      // A different, published email replaces an inferred one; the same email coming back (e.g. a HubSpot round trip) keeps the flag
+      if (guessed) exl.emailInferred = true; else if (guessed === false && rec.email !== before) delete exl.emailInferred; upd++; }
     else {
       const l = { id: uid(), ...rec, ...(ds !== "principal" ? { type: ds } : {}), stage: "new", seq: 0, sent: [], path: "", activity: [], families: {}, createdAt: new Date().toISOString() } as Lead;
+      if (guessed) l.emailInferred = true;
       setNext(l); S.leads.push(l); add++;
     }
   }
@@ -149,7 +156,7 @@ export function importContacts(text: string): ContactsResult {
   const H = rows[0].map(h => h.trim().toLowerCase());
   const ix = (...n: string[]) => { for (const k of n) { const i = H.indexOf(k); if (i >= 0) return i; } return -1; };
   const C = { lead: ix("lead id"), school: ix("school"), district: ix("district"), districtId: ix("district id"), first: ix("first name"), last: ix("last name"),
-    role: ix("role"), email: ix("email"), phone: ix("phone number", "phone"), ext: ix("ext", "extension"), notes: ix("notes") };
+    role: ix("role"), email: ix("email"), phone: ix("phone number", "phone"), ext: ix("ext", "extension"), notes: ix("notes"), inferred: ix("email inferred") };
   if (C.lead < 0 && C.school < 0) return { msg: "Need a School column (or Lead ID).", unmatched: [] };
   if (C.email < 0 && C.first < 0 && C.last < 0) return { msg: "Need First Name / Last Name or Email columns.", unmatched: [] };
   const low = (s?: string) => (s || "").trim().toLowerCase();
@@ -166,11 +173,13 @@ export function importContacts(text: string): ContactsResult {
       (sch ? (() => { const m = pool.filter(x => inDist(x) && (x.school || "").split(" / ").some(s => normS(s) === normS(sch))); return m.length === 1 ? m[0] : undefined; })() : undefined);
     if (!l) { unmatched.add(sch ? sch + (dist ? " (" + dist + ")" : "") : g("lead")); continue; }
     const c = { first: g("first"), last: g("last"), role: g("role"), email: low(g("email")), phone: g("phone"), ext: g("ext"), notes: g("notes") };
+    const inferred = !!c.email && /^(y|yes|true|1)$/i.test(g("inferred"));
     if (!c.email && !c.first && !c.last) { empty++; continue; }
     const sameName = (p: { first?: string; last?: string }) => !!(c.first && c.last) && low(p.first) === low(c.first) && low(p.last) === low(c.last);
     if ((c.email && (low(l.email) === c.email || (l.contacts || []).some(x => low(x.email) === c.email))) || sameName(l) || (l.contacts || []).some(sameName)) { dup++; continue; }
     const person: SchoolContact = { id: uid() };
     (Object.keys(c) as (keyof typeof c)[]).forEach(k => { if (c[k]) person[k] = c[k]; });
+    if (inferred) person.emailInferred = true;
     (l.contacts = l.contacts || []).push(person);
     const who = [c.first, c.last].filter(Boolean).join(" ") || c.email;
     added.set(l, [...(added.get(l) || []), who + (c.role ? " (" + c.role + ")" : "")]);

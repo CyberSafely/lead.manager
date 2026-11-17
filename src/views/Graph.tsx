@@ -17,6 +17,7 @@ interface BoxData {
   kind: "district" | "lead" | "contact";
   title: string; role: string; subtitle?: string; accent: string;
   person?: boolean; phone?: string; email?: string;   // people (leads + contacts) show their phone and email
+  emailGuess?: boolean;   // email inferred from the district pattern (not published)
   del?: () => void;
   [k: string]: unknown;
 }
@@ -31,7 +32,8 @@ function BoxNode({ data }: NodeProps) {
     {d.subtitle ? <div className="gnode-sub">{d.subtitle}</div> : null}
     {d.person ? <>
       <div className={"gnode-info" + (d.phone ? "" : " gnode-miss")}>{d.phone || "No phone"}</div>
-      <div className={"gnode-info" + (d.email ? "" : " gnode-miss")}>{d.email || "No email"}</div>
+      <div className={"gnode-info" + (d.email ? (d.emailGuess ? " gnode-guess" : "") : " gnode-miss")}
+        title={d.email && d.emailGuess ? "Inferred from the district's email pattern, not published: confirm it" : undefined}>{d.email ? d.email + (d.emailGuess ? " (inferred)" : "") : "No email"}</div>
     </> : null}
     {d.del ? <button className="gnode-del" title="Remove from chart" aria-label="Remove" onClick={e => { e.stopPropagation(); d.del!(); }}>×</button> : null}
     <Handle type="source" position={Position.Bottom} className="ghandle" isConnectable={false} />
@@ -76,7 +78,7 @@ export function Graph() {
 
   // A signature of what the chart draws; the layout rebuilds only when it changes (so dragging sticks).
   const sig = JSON.stringify([districtName, districtId, members.map(l =>
-    [l.id, l.type, l.stage, l.first, l.last, l.school, l.jobtitle, l.phone, l.email, (l.contacts || []).map(c => [c.id, c.first, c.last, c.role, c.phone, c.email, c.primary])])]);
+    [l.id, l.type, l.stage, l.first, l.last, l.school, l.jobtitle, l.phone, l.email, (l.contacts || []).map(c => [c.id, c.first, c.last, c.role, c.phone, c.email, c.primary, c.emailInferred]), l.emailInferred])]);
 
   const { baseNodes, edges } = useMemo(() => {
     const edges: Edge[] = [];
@@ -85,7 +87,7 @@ export function Graph() {
       data: {
         kind: "contact", accent: "var(--muted)",
         role: (c.role || "Contact") + (c.primary ? " · main" : ""), title: [c.first, c.last].filter(Boolean).join(" ") || "(no name)",
-        subtitle: schoolOf(l), person: true, phone: (c.phone || "").trim(), email: (c.email || "").trim(),
+        subtitle: schoolOf(l), person: true, phone: (c.phone || "").trim(), email: (c.email || "").trim(), emailGuess: !!c.emailInferred,
         del: () => { if (confirm("Remove this contact from " + schoolOf(l) + "?")) { l.contacts = (l.contacts || []).filter(x => x.id !== c.id); log(l, "Contact removed", [c.first, c.last].filter(Boolean).join(" ") || "contact"); save(); } },
       },
     }));
@@ -95,7 +97,7 @@ export function Graph() {
         kind: "lead", accent: accentOf(l),
         role: roleOf(l), title: name(l),
         subtitle: isPr(l) ? schoolOf(l) : (l.school || STAGE[l.stage as StageId]?.name || ""),
-        person: true, phone: (l.phone || "").trim(), email: (l.email || "").trim(),
+        person: true, phone: (l.phone || "").trim(), email: (l.email || "").trim(), emailGuess: !!l.emailInferred,
         del: () => { if (confirm("Delete " + name(l) + " (" + schoolOf(l) + ") and its history from the chart and your lists?")) { S.leads = S.leads.filter(x => x.id !== l.id); closeDrawer(); save(); } },
       },
     });
