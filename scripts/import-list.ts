@@ -3,7 +3,7 @@
 //   npm run import-list -- <list> <file.csv> [--campaign "Name"]            dry run: import, verify, then roll back
 //   npm run import-list -- <list> <file.csv> [--campaign "Name"] --commit   keep it, only if every check passes
 //
-// <list> is principal | overseer | campaign | pta | user | affiliate. Campaigns need --campaign (the name the app asks for).
+// <list> is principal | overseer | cto | campaign | pta | user | affiliate. Campaigns need --campaign (the name the app asks for).
 // The database's current leads are loaded, the app's own importCsv() runs on them (same matching: someone already in
 // the list is updated, not duplicated), and only the added or changed leads are written with put_leads, then read back
 // and compared. Output is counts only: no names, emails or phone numbers (vault rule 2, project rule 6).
@@ -14,7 +14,7 @@ import { ROOT_DIR, connect, safeError } from "./lib/env";
 
 const args = process.argv.slice(2).filter(a => a !== "--");
 const flag = (n: string) => { const i = args.indexOf("--" + n); return i < 0 ? undefined : args[i + 1]; };
-const LISTS = ["principal", "overseer", "campaign", "pta", "user", "affiliate"] as const;
+const LISTS = ["principal", "overseer", "cto", "campaign", "pta", "user", "affiliate"] as const;
 const list = args[0] as typeof LISTS[number], file = args.find(a => a.endsWith(".csv")), camp = (flag("campaign") || "").trim();
 const COMMIT = args.includes("--commit");
 if (!LISTS.includes(list) || !file) { console.error(`usage: npm run import-list -- <${LISTS.join("|")}> <file.csv> [--campaign "Name"] [--commit]`); process.exit(2); }

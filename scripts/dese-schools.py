@@ -99,6 +99,10 @@ def main():
     # The app's import also matches a principal by first + last + district (importCsv in src/lib/csv.ts)
     lo_ = lambda x: s(x).lower()
     have_name = {(lo_(l.get("first")), lo_(l.get("last")), lo_(l.get("district"))) for l in leads if not l.get("type") and (l.get("first") or l.get("last"))}
+    # A school already on the Principal list (same district + school name), even under a different principal
+    normS = lambda x: re.sub(r"[^a-z0-9]", "", re.sub(r"\b(school|schools|the)\b", "", lo_(x)))
+    have_school = {(pad(l.get("districtId")), normS(sc)) for l in leads if not l.get("type") and l.get("districtId")
+                   for sc in s(l.get("school")).split(" / ") if sc}
     # Reuse the district spelling already in the app, so filters, the map click and the graph keep one name.
     # Prefer the Principal list's spelling, then the most common one on other lists.
     spell = {}
@@ -132,6 +136,7 @@ def main():
         dname_app = spell.get(code) or spell.get("n:" + normD(dname)) or dname
         if dname_app != dname: respelled.add(dname)
         if (first.lower(), last.lower(), dname_app.lower()) in have_name: dup_in_app += 1; continue
+        if any((code, normS(s(b["SCHNAME"]))) in have_school for b in bs): dup_in_app += 1; continue
         if e.startswith("nomail:") and not (first or last): blank += 1; continue
         lo = min(grade(b["BGRADE"]) for b in bs); hi = max(grade(b["EGRADE"]) for b in bs)
         lv = level(b0, lo, hi) if len(bs) == 1 else level({}, lo, hi)
@@ -167,7 +172,7 @@ def main():
     for r, n in why.most_common(): print(f"  dropped, {r + ':':30} {n}")
     print(f"middle/high buildings:     {len(kept)}  ({len(kept) - len(by)} share a principal with another building)")
     print(f"unique principals:         {len(by)}  ({noemail} without an email)")
-    print(f"already in the app:        {dup_in_app}  (skipped; matched on email, or name + district, in {os.path.basename(lp) if lp else 'no backup'})")
+    print(f"already in the app:        {dup_in_app}  (skipped; matched on email, name + district, or school + district, in {os.path.basename(lp) if lp else 'no backup'})")
     print(f"no name and no email:      {blank}  (skipped)")
     print(f"district spelled as in app:{len(respelled):>5}  (DESE name replaced with the app's existing spelling)")
     print(f"new leads to import:       {len(out)}")

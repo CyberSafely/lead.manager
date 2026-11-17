@@ -3,7 +3,7 @@
 // Bump RES_SEED when you add new entries here so they reach existing installs.
 import type { Resource } from "./types";
 
-export const RES_SEED = 2;
+export const RES_SEED = 3;
 
 export const DEFAULT_RESOURCES: Resource[] = [
   {
@@ -82,5 +82,44 @@ Rules that shape all of this
 - Keep exported CSV and backup files outside the Obsidian vault — they contain real names and emails.
 
 For the full technical detail (exact export columns, the planned API connection, open questions), see docs/export-and-hubspot.md and docs/database.md in the project.`,
+  },
+  {
+    id: "res-big-districts",
+    title: "Focus on the biggest districts (and the top 10 to optimize)",
+    tags: "districts, strategy, priorities",
+    body: `Missouri has 562 school districts, but its students are concentrated in a small number of them. Source: DESE School Directory, Nov 2026 (886,000 students in total).
+
+How concentrated it is
+- The 10 largest districts hold about 21% of all Missouri students (186,000).
+- The 20 largest hold about 35% (309,000).
+- The 40 largest hold about 49%, nearly half (433,000).
+- The 50 largest hold about 54% (479,000).
+So roughly 7% of districts reach about half of the state's families. One large district can equal dozens of small ones.
+
+What this means for outreach
+- Spend the most effort where the families are. A strong relationship in one big district is worth more than a dozen cold calls to small ones.
+- In big districts, go to the district office, not each school. Guidance counselors rarely have decision-making power. The people who can say yes oversee all the schools: the head of student services, the technology head (CTO/CIO), and the safety and security lead. The superintendent is already on the Overseer list.
+- Make every call land on a named person. The goal is that no call to a big district goes to a general front desk.
+
+What a "robust" big-district lead looks like
+- 1 to 5 district leaders on the CTOs list, each with name, title, direct phone and email (whenever the district publishes one).
+- Linked to the district by its District ID, so they show under the district in the Graph next to the superintendent.
+- If a district publishes only phone numbers, ask for the email on the call and add it. HubSpot matches people by email, so phone-only contacts don't come through.
+
+The top 10 districts to optimize (students, area, website)
+1. Springfield R-XII: 24,500 students, Springfield (sps.org, not the address DESE lists)
+2. North Kansas City 74: 21,700, Kansas City north (nkcschools.org)
+3. Rockwood R-VI: 19,300, west St. Louis County (rsdmo.org)
+4. Columbia 93: 18,400, Columbia (cpsk12.org)
+5. Wentzville R-IV: 17,800, St. Charles County (wentzville.k12.mo.us)
+6. Lee's Summit R-VII: 17,700, Kansas City metro (lsr7.org)
+7. St. Louis City (Saint Louis Public Schools): 17,200, St. Louis (slps.org)
+8. Francis Howell R-III: 16,900, St. Charles County (fhsdschools.org)
+9. Parkway C-2: 16,600, west St. Louis County (parkwayschools.net)
+10. Hazelwood: 16,400, north St. Louis County (hazelwoodschools.org)
+
+Next in line (11 to 20): Fort Zumwalt, Kansas City 33, Blue Springs, Independence, Liberty, Park Hill, St. Joseph, Fox C-6, Mehlville, Ferguson-Florissant.
+
+Tip: plan call days by area. Kansas City (North Kansas City, Lee's Summit, plus KC 33, Blue Springs, Independence, Liberty, Park Hill), St. Louis city and county (St. Louis City, Rockwood, Parkway, Hazelwood), and St. Charles (Wentzville, Francis Howell, Fort Zumwalt) each make a full day.`,
   },
 ];
