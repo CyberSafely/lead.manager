@@ -16,16 +16,23 @@ const NODE_W = 210, SLOT = 236, ROW = 150;
 interface BoxData {
   kind: "district" | "lead" | "contact";
   title: string; role: string; subtitle?: string; accent: string;
+  person?: boolean; phone?: string; email?: string;   // people (leads + contacts) show their phone and email
   del?: () => void;
   [k: string]: unknown;
 }
 function BoxNode({ data }: NodeProps) {
   const d = data as BoxData;
-  return <div className={"gnode gnode-" + d.kind} style={{ borderLeftColor: d.accent }}>
+  const noData = !!d.person && !d.phone && !d.email;
+  return <div className={"gnode gnode-" + d.kind + (noData ? " gnode-nodata" : "")} style={{ borderLeftColor: noData ? undefined : d.accent }}
+    title={noData ? "No phone or email on file" : undefined}>
     <Handle type="target" position={Position.Top} className="ghandle" isConnectable={false} />
     <div className="gnode-role" style={{ color: d.accent }}>{d.role}</div>
     <div className="gnode-title">{d.title}</div>
     {d.subtitle ? <div className="gnode-sub">{d.subtitle}</div> : null}
+    {d.person ? <>
+      <div className={"gnode-info" + (d.phone ? "" : " gnode-miss")}>{d.phone || "No phone"}</div>
+      <div className={"gnode-info" + (d.email ? "" : " gnode-miss")}>{d.email || "No email"}</div>
+    </> : null}
     {d.del ? <button className="gnode-del" title="Remove from chart" aria-label="Remove" onClick={e => { e.stopPropagation(); d.del!(); }}>×</button> : null}
     <Handle type="source" position={Position.Bottom} className="ghandle" isConnectable={false} />
   </div>;
@@ -69,7 +76,7 @@ export function Graph() {
 
   // A signature of what the chart draws; the layout rebuilds only when it changes (so dragging sticks).
   const sig = JSON.stringify([districtName, districtId, members.map(l =>
-    [l.id, l.type, l.stage, l.first, l.last, l.school, l.jobtitle, (l.contacts || []).map(c => [c.id, c.first, c.last, c.role])])]);
+    [l.id, l.type, l.stage, l.first, l.last, l.school, l.jobtitle, l.phone, l.email, (l.contacts || []).map(c => [c.id, c.first, c.last, c.role, c.phone, c.email, c.primary])])]);
 
   const { baseNodes, edges } = useMemo(() => {
     const edges: Edge[] = [];
@@ -77,8 +84,8 @@ export function Graph() {
       id: "c:" + c.id, children: [], x: 0, y: 0,
       data: {
         kind: "contact", accent: "var(--muted)",
-        role: c.role || "Contact", title: [c.first, c.last].filter(Boolean).join(" ") || c.email || c.phone || "(no name)",
-        subtitle: c.primary ? "Main contact" : (c.email || c.phone || ""),
+        role: (c.role || "Contact") + (c.primary ? " · main" : ""), title: [c.first, c.last].filter(Boolean).join(" ") || "(no name)",
+        subtitle: schoolOf(l), person: true, phone: (c.phone || "").trim(), email: (c.email || "").trim(),
         del: () => { if (confirm("Remove this contact from " + schoolOf(l) + "?")) { l.contacts = (l.contacts || []).filter(x => x.id !== c.id); log(l, "Contact removed", [c.first, c.last].filter(Boolean).join(" ") || "contact"); save(); } },
       },
     }));
@@ -87,7 +94,8 @@ export function Graph() {
       data: {
         kind: "lead", accent: accentOf(l),
         role: roleOf(l), title: name(l),
-        subtitle: isPr(l) ? schoolOf(l) : (STAGE[l.stage as StageId]?.name || ""),
+        subtitle: isPr(l) ? schoolOf(l) : (l.school || STAGE[l.stage as StageId]?.name || ""),
+        person: true, phone: (l.phone || "").trim(), email: (l.email || "").trim(),
         del: () => { if (confirm("Delete " + name(l) + " (" + schoolOf(l) + ") and its history from the chart and your lists?")) { S.leads = S.leads.filter(x => x.id !== l.id); closeDrawer(); save(); } },
       },
     });
