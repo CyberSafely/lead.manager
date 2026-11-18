@@ -33,3 +33,25 @@ describe("district info", () => {
     expect(desePattern({}, "12345")).toBeNull();
   });
 });
+
+import { readDistrictCsv } from "../src/lib/districtImport";
+describe("Graph → Import people", () => {
+  const head = "District ID,District,First Name,Last Name,Email,Email Inferred,Phone Number,Job Title,Notes";
+  it("keeps this district's rows, skips other districts, assigns rows with no district", () => {
+    const csv = [head,
+      "12345,Example R-I,Pat,Example,pexample@example.org,,555-555-0100,Chief Technology Officer,",
+      "99999,Other R-II,Sam,Sample,ssample@example.org,,,Director of Technology,",
+      ",,Jo,Demo,jdemo@example.org,yes,,Safety Coordinator,",
+    ].join("\n");
+    const r = readDistrictCsv(csv, "cto-example-import.csv", "Example R-I", "012345");
+    expect(r).toMatchObject({ kind: "people", total: 3, kept: 2, other: 1, filled: 1, suggest: "cto" });
+    expect(r.csv.split("\n")[2]).toBe("12345,Example R-I,Jo,Demo,jdemo@example.org,yes,,Safety Coordinator,");
+  });
+  it("adds district columns to a sheet without them, and spots a school contacts file", () => {
+    const r = readDistrictCsv("First Name,Last Name,Email\nPat,Example,pat@example.org", "mine.csv", "Example R-I", "12345");
+    expect(r.csv).toBe("First Name,Last Name,Email,District ID,District\nPat,Example,pat@example.org,12345,Example R-I");
+    const c = readDistrictCsv("School,District ID,First Name,Last Name,Role\nExample High,12345,Pat,Example,Guidance counselor", "contacts-x.csv", "Example R-I", "12345");
+    expect(c).toMatchObject({ kind: "contacts", kept: 1 });
+    expect(readDistrictCsv("Foo,Bar\n1,2", "x.csv", "Example R-I", "12345").error).toBeTruthy();
+  });
+});

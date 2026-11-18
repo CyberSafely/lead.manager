@@ -1,13 +1,15 @@
 // Relationship chart: a district, the schools inside it, and the people at each — drawn with React Flow.
 // Search a district or school to load its staff chart; click a node to open that lead (or the district → the map);
 // add people you pick up on a call straight onto the chart (a new lead, or another contact at a school).
-import { useCallback, useMemo, useRef, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import { ReactFlow, Background, Controls, Handle, Position, applyNodeChanges, type Edge, type Node, type NodeChange, type NodeProps } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
 import { DL, S, closeDrawer, goTo, isCto, isOv, isPr, lead, render, save, setDs, ui, useStore } from "../store";
 import { addContact, log, setNext } from "../lib/logic";
 import { STAGE } from "../lib/pipeline";
-import { fmtPhone, name, normD, schoolOf, uid } from "../lib/helpers";
+import { dl, fmtPhone, name, normD, schoolOf, todayISO, uid } from "../lib/helpers";
+import { importContacts, importCsv } from "../lib/csv";
+import { readDistrictCsv, type DistrictCsv } from "../lib/districtImport";
 import type { Lead, ListId, StageId } from "../lib/types";
 import { buildingsOf, sizeLine, statsFor } from "../lib/district";
 import { DistrictInfo } from "./DistrictInfo";
@@ -137,8 +139,9 @@ export function Graph() {
 
   // Controlled nodes: reset the layout when the chart signature changes; dragging persists within a chart.
   const [nodes, setNodes] = useState<Node[]>(baseNodes);
-  const sigRef = useRef(sig);
-  if (sigRef.current !== sig) { sigRef.current = sig; setNodes(baseNodes); }   // adjust state during render (re-runs before commit)
+  // React's "adjust state when a prop changes" pattern: kept in state, not a ref, so a discarded render can't skip it
+  const [shownSig, setShownSig] = useState(sig);
+  if (shownSig !== sig) { setShownSig(sig); setNodes(baseNodes); }
   const onNodesChange = useCallback((changes: NodeChange[]) => setNodes(nds => applyNodeChanges(changes, nds)), []);
   const onNodeClick = (_: unknown, node: Node) => {
     const d = node.data as BoxData;
@@ -167,6 +170,7 @@ export function Graph() {
         </div>
         <span className="grow" />
         <AddPerson schools={schools} />
+        <ImportPeople />
         <button className="b sm" onClick={() => goTo({ view: "map", label: districtName, district: districtName })}>Open on map</button>
         <button className="b sm" onClick={() => { ui.graphDistrict = ""; ui.graphDistrictId = ""; render(); }}>Clear</button>
       </div>
@@ -179,6 +183,7 @@ export function Graph() {
         </ReactFlow> : <div className="graph-empty">
           <p className="muted">No one is on this district's chart yet.</p>
           <AddPerson schools={schools} startOpen />
+          <div style={{ marginTop: 8 }}><ImportPeople /></div>
         </div>}
       </div>}
     </>}
@@ -228,6 +233,60 @@ function GraphSearch() {
       <b>{h.kind === "school" ? h.name : h.name}</b><span className="small muted">{h.kind === "school" ? "School · " + h.sub : h.sub}</span></button>)
       : <div className="small muted" style={{ padding: "6px 10px" }}>No match for "{q}".</div>}</div> : null}
   </div>;
+}
+
+/* ---------- import scraped people for this district ---------- */
+const LIST_LABEL: Partial<Record<ListId, string>> = { cto: "District technology / CTOs", overseer: "Superintendents / overseers", principal: "Schools / principals" };
+
+function ImportPeople() {
+  const [open, setOpen] = useState(false);
+  const [file, setFile] = useState(""), [rd, setRd] = useState<DistrictCsv | null>(null), [list, setList] = useState<ListId>("cto");
+  const [out, setOut] = useState<{ msg: string; unmatched?: string[] } | null>(null);
+  const district = ui.graphDistrict || "this district";
+  const reset = () => { setFile(""); setRd(null); setOut(null); };
+
+  const pick = (f: File) => f.text().then(t => {
+    const r = readDistrictCsv(t, f.name, ui.graphDistrict, String(ui.graphDistrictId || ""));
+    setFile(f.name); setRd(r); setList(r.suggest); setOut(null);
+  });
+  const run = () => {
+    if (!rd || !rd.kept) return;
+    // Same safety net as the Data tab: a backup downloads before anything changes
+    dl(`outreach-backup-before-graph-import-${todayISO()}.json`, JSON.stringify(S, null, 1), "application/json");
+    if (rd.kind === "contacts") { const r = importContacts(rd.csv); setOut({ msg: r.msg, unmatched: r.unmatched }); }
+    else setOut({ msg: importCsv(rd.csv, "", list) });
+    setRd(null); render();
+  };
+
+  // Opens as a panel under the button, so the header row and chart don't move
+  return <span className="graph-pop-wrap">
+    <button className={"b sm" + (open ? " on" : "")} aria-expanded={open} onClick={() => { reset(); setOpen(!open); }}>Import people</button>
+    {open ? <div className="card graph-pop" data-parity-skip>
+    <div className="row" style={{ justifyContent: "space-between", alignItems: "baseline", gap: 8 }}>
+      <b>Import people into {district}</b>
+      <button className="b sm" onClick={() => { reset(); setOpen(false); }}>{out ? "Done" : "Cancel"}</button>
+    </div>
+    <p className="small muted" style={{ margin: "4px 0 8px" }}>A CSV from the staff scraper (<code>cto-*.csv</code>, <code>contacts-*.csv</code>) or your own sheet with First Name, Last Name, Email, Phone and Job Title or Role. Only rows for this district are imported; rows with no district are added to it. People already here are updated or skipped, never duplicated.</p>
+    <label className="b sm">{file ? "Choose another file" : "Choose CSV file"}<input type="file" accept=".csv,text/csv" className="hide" onChange={e => { const f = e.target.files?.[0]; if (f) pick(f); e.target.value = ""; }} /></label>
+    {rd ? <div className="small" style={{ marginTop: 8 }}>
+      {rd.error ? <div className="over">{rd.error}</div> : <>
+        <div><b>{file}</b>: {rd.kept} {rd.kept === 1 ? "person" : "people"} for {district}
+          {rd.other ? <span className="muted"> · {rd.other} for other districts (skipped)</span> : null}
+          {rd.filled ? <span className="muted"> · {rd.filled} with no district (added here)</span> : null}</div>
+        {rd.kind === "contacts"
+          ? <div className="muted" style={{ marginTop: 4 }}>School contacts: each person is added to their school's lead, which must already be on your list.</div>
+          : <div className="row" style={{ gap: 6, alignItems: "center", marginTop: 6 }}><span>Add them as</span>
+            <select value={list} onChange={e => setList(e.target.value as ListId)}>{(Object.keys(LIST_LABEL) as ListId[]).map(k => <option key={k} value={k}>{LIST_LABEL[k]}</option>)}</select></div>}
+        <div className="row" style={{ gap: 6, marginTop: 8 }}>
+          <button className="b sm primary" disabled={!rd.kept} onClick={run}>Import {rd.kept}</button>
+          <span className="muted">A backup downloads first.</span>
+        </div>
+      </>}
+    </div> : null}
+    {out ? <div className="small" style={{ marginTop: 8 }}>{out.msg}
+      {out.unmatched?.length ? <div className="over">No school on your list for: {out.unmatched.join(", ")}. Add the school first (Add person → School / principal), then import again.</div> : null}</div> : null}
+    </div> : null}
+  </span>;
 }
 
 /* ---------- add a person to the district ---------- */

@@ -3,7 +3,7 @@ import { DL, S, W, save, tpl, ui } from "../store";
 import { CALLS, STAGE, STAGES, callDef } from "./pipeline";
 import { campsOf, csvCell, digits, fmtPhone, isPr, lastTouch, name, normD, parseFollowers, profileUrlOf, setBase, touches, uid } from "./helpers";
 import { log, logSent, setCall, setNext } from "./logic";
-import type { Lead, SchoolContact } from "./types";
+import type { Lead, ListId, SchoolContact } from "./types";
 
 export function parseCsv(t: string) {
   const rows: string[][] = []; let r: string[] = [], f = "", q = false;
@@ -60,8 +60,10 @@ export function applyActivityLog(text: string): LogResult {
   };
 }
 
-export function importCsv(text: string, camp: string) {
-  const ds = ui.ds;
+/** `list` imports into that list instead of the one selected at the top (Graph → Import people). */
+export function importCsv(text: string, camp: string, list?: ListId) {
+  const ds = list || ui.ds;
+  const inList = () => S.leads.filter(l => (l.type || "principal") === ds);
   let rows = parseCsv(text.replace(/^﻿/, ""));
   // Skip a title line above the header (e.g. "PTA DATASET,")
   const hi = rows.slice(0, 5).findIndex(r => r.some(c => /^(e-?mail|name|full name|first ?name|record id|contact id)$/i.test(c.trim())));
@@ -123,7 +125,7 @@ export function importCsv(text: string, camp: string) {
     }
     if (/#VALUE!/.test(rec.first + rec.last)) { rec.first = ""; rec.last = ""; rec.notes = rec.notes || "⚠️ Name was #VALUE! in HubSpot. Fix the record there."; }
     if (!rec.email && !rec.first && !rec.last && !rec.handle) { skip++; continue; }
-    const pool = DL();
+    const pool = inList();
     // Affiliates match on handle + platform: one person can run several accounts
     const exl = ds === "affiliate" ? (rec.handle ? pool.find(l => low(l.handle) === low(rec.handle) && low(l.platform) === low(rec.platform)) : undefined) : pool.find(l => (rec.hubspotId && l.hubspotId === rec.hubspotId) || (rec.email && l.email === rec.email))
       || (rec.first && pool.find(l => low(l.first) === low(rec.first) && low(l.last) === low(rec.last) && low(l.district) === low(rec.district)));
@@ -139,7 +141,7 @@ export function importCsv(text: string, camp: string) {
     }
   }
   save();
-  const P = DL(), unowned = ds === "affiliate" ? 0 : P.filter(l => !l.owner).length, noEmail = P.filter(l => !l.email).length, noSchool = ds !== "principal" ? 0 : P.filter(l => !l.school).length;
+  const P = inList(), unowned = ds === "affiliate" ? 0 : P.filter(l => !l.owner).length, noEmail = P.filter(l => !l.email).length, noSchool = ds !== "principal" ? 0 : P.filter(l => !l.school).length;
   return `Added ${add}, updated ${upd}, skipped ${skip} empty rows.` + (unowned ? ` ${unowned} have no HubSpot owner.` : "") + (noEmail ? ` ${noEmail} have no email.` : "") +
     (noSchool ? ` ${noSchool} have no school name (only the district). Emails will say the district until you add it.` : "");
 }
