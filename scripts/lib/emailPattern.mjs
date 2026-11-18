@@ -70,7 +70,22 @@ export function inferEmail(pat, first, last) {
 
 /** One line for a lead's notes explaining where an inferred email came from. */
 export function inferNote(pat) {
-  return `Email inferred from the district's address format (${pat.pattern}@${pat.domain}: ${pat.matches} of ${pat.total} known district emails fit). Not published: confirm it on the call.`;
+  const from = pat.source === "DESE" ? "principal and superintendent emails in the DESE directory" : "known district emails";
+  return `Email inferred from the district's address format (${pat.pattern}@${pat.domain}: ${pat.matches} of ${pat.total} ${from} fit). Not published: confirm it on the call.`;
+}
+
+/**
+ * The district's format according to the DESE directory, from public/district-stats.js (scripts/district-stats.py).
+ * stats: window.MO_DISTRICT_STATS (or the same object loaded in Node). Same bar as learnPattern: the format must be
+ * one we can build (in PATTERNS) and fit at least `minMatches` and `minShare` of the addresses on the main domain.
+ */
+export function desePattern(stats, districtId, { minMatches = 3, minShare = 0.5 } = {}) {
+  const code = String(districtId || "").trim().padStart(6, "0");
+  const e = stats?.[code]?.emails?.[0];
+  if (!e || PERSONAL.test(e.domain)) return null;
+  const [pattern, matches] = (e.patterns || []).find(([p]) => PATTERNS[p]) || [];
+  if (!pattern || matches < minMatches || matches / e.n < minShare) return null;
+  return { domain: e.domain, pattern, matches, total: e.n, share: matches / e.n, source: "DESE" };
 }
 
 /** Everyone in a district we have a name + email for: the leads themselves and the people on their school records. */

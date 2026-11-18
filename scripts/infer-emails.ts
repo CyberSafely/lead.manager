@@ -10,7 +10,8 @@
 // and the lead's history gets a Note (not an outreach touch). Nothing is sent. HubSpot matches people by email, so
 // this is what lets phone-only people link to their district there. Prints counts and district names only.
 import { connect, safeError } from "./lib/env";
-import { districtPeople, inferEmail, inferNote, learnPattern } from "./lib/emailPattern.mjs";
+import { desePattern, districtPeople, inferEmail, inferNote, learnPattern } from "./lib/emailPattern.mjs";
+import { loadDistrictStats } from "./lib/districtStats.mjs";
 const { leadKey } = await import("../src/lib/cloudShape");
 
 const args = process.argv.slice(2).filter(a => a !== "--");
@@ -28,14 +29,15 @@ try {
   await c.query("begin");
   const leads: any[] = (await c.query("select data from public.leads_json")).rows.map(r => r.data);
   const did = (l: any) => String(l.districtId || "").replace(/^0+/, "");
+  const stats = loadDistrictStats();
   const districts = ALL ? [...new Set(leads.map(did).filter(Boolean))] : ids;
   const before = new Map(leads.map(l => [l.id, leadKey(l)]));
   let leadN = 0, contactN = 0;
   for (const id of districts) {
     const inDist = leads.filter(l => did(l) === id);
-    const pat = learnPattern(districtPeople(leads, id));
+    const pat = learnPattern(districtPeople(leads, id)) || desePattern(stats, id);   // DESE directory as the fallback
     const name = inDist[0]?.district || id;
-    if (!pat) { if (!ALL) console.log(`  ${name}: no clear email format in its ${districtPeople(leads, id).length} known emails, nothing inferred`); continue; }
+    if (!pat) { if (!ALL) console.log(`  ${name}: no clear email format in its ${districtPeople(leads, id).length} known emails or DESE, nothing inferred`); continue; }
     let n = 0;
     for (const l of inDist) {
       const added: string[] = [];

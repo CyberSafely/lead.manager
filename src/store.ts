@@ -151,6 +151,8 @@ export const ui = {
   // Graph (relationship chart): the district currently charted, so it survives leaving and coming back.
   graphDistrict: "",
   graphDistrictId: "",
+  // Graph: which tab shows under the district header ("chart" = the relationship chart, "info" = District info)
+  graphTab: "chart" as "chart" | "info",
 };
 export interface Picked { ids: string[]; label: string }
 

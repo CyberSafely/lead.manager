@@ -117,8 +117,20 @@ export interface DistrictFeature {
   geometry: { type: "Polygon"; coordinates: number[][][] } | { type: "MultiPolygon"; coordinates: number[][][][] };
 }
 
+/** One district's DESE facts (public/district-stats.js, built by scripts/district-stats.py). Organisation-level only. */
+export interface DistrictBuilding { name: string; grades: string; lo: number | null; hi: number | null; level: string; students: number | null; phone: string }
+export interface DistrictStats {
+  name: string; city: string; county: string; phone: string; url: string;
+  students: number | null; schools: number | null; teachers: number | null;
+  levels: Record<string, { schools: number | null; students: number | null }>;
+  /** Staff email formats per domain: how many directory addresses, and the formats they follow ([pattern, count]). */
+  emails: { domain: string; n: number; patterns: [string, number][] }[];
+  buildings: DistrictBuilding[];
+}
+
 declare global {
   interface Window {
+    MO_DISTRICT_STATS?: Record<string, DistrictStats>;
     VAULT_TEMPLATES?: VaultTemplates;
     MO_DISTRICTS?: { type: "FeatureCollection"; features: DistrictFeature[] };
   }

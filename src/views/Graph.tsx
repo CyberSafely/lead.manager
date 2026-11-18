@@ -7,8 +7,10 @@ import "@xyflow/react/dist/style.css";
 import { DL, S, closeDrawer, goTo, isCto, isOv, isPr, lead, render, save, setDs, ui, useStore } from "../store";
 import { addContact, log, setNext } from "../lib/logic";
 import { STAGE } from "../lib/pipeline";
-import { name, normD, schoolOf, uid } from "../lib/helpers";
+import { fmtPhone, name, normD, schoolOf, uid } from "../lib/helpers";
 import type { Lead, ListId, StageId } from "../lib/types";
+import { buildingsOf, sizeLine, statsFor } from "../lib/district";
+import { DistrictInfo } from "./DistrictInfo";
 
 const NODE_W = 210, SLOT = 236, ROW = 150;
 
@@ -17,6 +19,7 @@ interface BoxData {
   kind: "district" | "lead" | "contact";
   title: string; role: string; subtitle?: string; accent: string;
   person?: boolean; phone?: string; email?: string;   // people (leads + contacts) show their phone and email
+  meta?: string;   // school size from DESE ("1,433 students · grades 9-12")
   emailGuess?: boolean;   // email inferred from the district pattern (not published)
   del?: () => void;
   [k: string]: unknown;
@@ -30,6 +33,7 @@ function BoxNode({ data }: NodeProps) {
     <div className="gnode-role" style={{ color: d.accent }}>{d.role}</div>
     <div className="gnode-title">{d.title}</div>
     {d.subtitle ? <div className="gnode-sub">{d.subtitle}</div> : null}
+    {d.meta ? <div className="gnode-meta">{d.meta}</div> : null}
     {d.person ? <>
       <div className={"gnode-info" + (d.phone ? "" : " gnode-miss")}>{d.phone || "No phone"}</div>
       <div className={"gnode-info" + (d.email ? (d.emailGuess ? " gnode-guess" : "") : " gnode-miss")}
@@ -82,12 +86,13 @@ export function Graph() {
 
   const { baseNodes, edges } = useMemo(() => {
     const edges: Edge[] = [];
+    const st = statsFor(districtId, districtName);
     const contactsOf = (l: Lead): TNode[] => (l.contacts || []).map(c => ({
       id: "c:" + c.id, children: [], x: 0, y: 0,
       data: {
         kind: "contact", accent: "var(--muted)",
         role: (c.role || "Contact") + (c.primary ? " · main" : ""), title: [c.first, c.last].filter(Boolean).join(" ") || "(no name)",
-        subtitle: schoolOf(l), person: true, phone: (c.phone || "").trim(), email: (c.email || "").trim(), emailGuess: !!c.emailInferred,
+        subtitle: schoolOf(l), person: true, phone: fmtPhone((c.phone || "").trim()) + (c.phone && c.ext ? " x" + c.ext : ""), email: (c.email || "").trim(), emailGuess: !!c.emailInferred,
         del: () => { if (confirm("Remove this contact from " + schoolOf(l) + "?")) { l.contacts = (l.contacts || []).filter(x => x.id !== c.id); log(l, "Contact removed", [c.first, c.last].filter(Boolean).join(" ") || "contact"); save(); } },
       },
     }));
@@ -97,7 +102,8 @@ export function Graph() {
         kind: "lead", accent: accentOf(l),
         role: roleOf(l), title: name(l),
         subtitle: isPr(l) ? schoolOf(l) : (l.school || STAGE[l.stage as StageId]?.name || ""),
-        person: true, phone: (l.phone || "").trim(), email: (l.email || "").trim(), emailGuess: !!l.emailInferred,
+        person: true, phone: fmtPhone((l.phone || "").trim()), email: (l.email || "").trim(),
+        meta: isPr(l) ? sizeLine(buildingsOf(l, st)) : "", emailGuess: !!l.emailInferred,
         del: () => { if (confirm("Delete " + name(l) + " (" + schoolOf(l) + ") and its history from the chart and your lists?")) { S.leads = S.leads.filter(x => x.id !== l.id); closeDrawer(); save(); } },
       },
     });
@@ -118,7 +124,8 @@ export function Graph() {
     }
     const root: TNode = {
       id: "district", children, x: 0, y: 0,
-      data: { kind: "district", accent: "var(--accent)", role: "District", title: districtName || "(unnamed district)", subtitle: `${schools.length} ${schools.length === 1 ? "school" : "schools"} · ${members.length} ${members.length === 1 ? "lead" : "leads"}` },
+      data: { kind: "district", accent: "var(--accent)", role: "District", title: districtName || "(unnamed district)", subtitle: `${schools.length} ${schools.length === 1 ? "school" : "schools"} · ${members.length} ${members.length === 1 ? "lead" : "leads"}`,
+        meta: st?.students ? `${st.students.toLocaleString("en-US")} students · ${st.schools ?? "?"} schools` : "" },
     };
     layout([root]);
     const flat: TNode[] = [];
@@ -154,11 +161,16 @@ export function Graph() {
       <div className="row" style={{ margin: "10px 0 6px", gap: 8, flexWrap: "wrap", alignItems: "center" }}>
         <h3 style={{ margin: 0 }}>{districtName || "(district)"}</h3>
         <span className="muted small">· {members.length} {members.length === 1 ? "lead" : "leads"}</span>
+        <div className="ds" role="tablist" aria-label="District view">
+          <button role="tab" aria-selected={ui.graphTab !== "info"} className={ui.graphTab !== "info" ? "on" : ""} onClick={() => { ui.graphTab = "chart"; render(); }}>Chart</button>
+          <button role="tab" aria-selected={ui.graphTab === "info"} className={ui.graphTab === "info" ? "on" : ""} onClick={() => { ui.graphTab = "info"; render(); }}>District info</button>
+        </div>
         <span className="grow" />
         <AddPerson schools={schools} />
         <button className="b sm" onClick={() => goTo({ view: "map", label: districtName, district: districtName })}>Open on map</button>
         <button className="b sm" onClick={() => { ui.graphDistrict = ""; ui.graphDistrictId = ""; render(); }}>Clear</button>
       </div>
+      {ui.graphTab === "info" ? <DistrictInfo districtName={districtName} districtId={districtId} members={members} open={openLeadOnGraph} /> :
       <div className="graph-canvas">
         {members.length ? <ReactFlow key={sig} nodes={nodes} edges={edges} nodeTypes={nodeTypes} onNodesChange={onNodesChange} onNodeClick={onNodeClick}
           fitView fitViewOptions={{ padding: 0.2 }} minZoom={0.3} maxZoom={1.6} nodesConnectable={false} proOptions={{ hideAttribution: false }}>
@@ -168,7 +180,7 @@ export function Graph() {
           <p className="muted">No one is on this district's chart yet.</p>
           <AddPerson schools={schools} startOpen />
         </div>}
-      </div>
+      </div>}
     </>}
   </div>;
 }

@@ -22,7 +22,8 @@ import fs from "node:fs";
 import os from "node:os";
 import path from "node:path";
 import { chromium } from "playwright";
-import { districtPeople, inferEmail, inferNote, learnPattern } from "./lib/emailPattern.mjs";
+import { desePattern, districtPeople, inferEmail, inferNote, learnPattern } from "./lib/emailPattern.mjs";
+import { districtLine, loadDistrictStats } from "./lib/districtStats.mjs";
 
 const ROOT = path.dirname(path.dirname(new URL(import.meta.url).pathname));
 const arg = n => { const i = process.argv.indexOf("--" + n); return i < 0 ? "" : process.argv[i + 1] || ""; };
@@ -200,7 +201,11 @@ rows.sort((a, b) => a.School.localeCompare(b.School) || ORDER.indexOf(a.Role) - 
 
 // Missing emails: build them from the district's address format, learned from the emails already in --leads plus the
 // ones just found (HubSpot matches people by email, so a phone-only person can't be linked). Marked as inferred.
-const pat = learnPattern([...districtPeople(leads, districtId), ...rows.filter(r => r.Email).map(r => ({ first: r["First Name"], last: r["Last Name"], email: r.Email }))]);
+// Too few known emails to tell? Fall back to the format DESE's directory shows for this district (public/district-stats.js).
+const dstats = loadDistrictStats();
+console.log(districtLine(dstats, districtId));
+const pat = learnPattern([...districtPeople(leads, districtId), ...rows.filter(r => r.Email).map(r => ({ first: r["First Name"], last: r["Last Name"], email: r.Email }))])
+  || desePattern(dstats, districtId);
 let inferred = 0;
 for (const r of rows) {
   r["Email Inferred"] = "";
@@ -208,8 +213,8 @@ for (const r of rows) {
   const e = inferEmail(pat, r["First Name"], r["Last Name"]);
   if (e) { r.Email = e; r["Email Inferred"] = "yes"; r.Notes += " " + inferNote(pat); inferred++; }
 }
-if (!leads.length) console.log("note: no --leads given, so missing emails can't be inferred from the district's existing ones");
-else console.log(pat ? `district email format: ${pat.pattern}@${pat.domain} (${pat.matches} of ${pat.total} known emails fit) · emails inferred: ${inferred}` : "district email format: no clear format in the known emails, nothing inferred");
+if (!leads.length && !pat) console.log("note: no --leads given and no DESE format for this district, so missing emails can't be inferred");
+else console.log(pat ? `district email format: ${pat.pattern}@${pat.domain} (${pat.matches} of ${pat.total} ${pat.source === "DESE" ? "DESE directory" : "known"} emails fit) · emails inferred: ${inferred}` : "district email format: no clear format in the known emails or DESE, nothing inferred");
 const cell = v => /[",\n]/.test(String(v)) ? `"${String(v).replace(/"/g, '""')}"` : String(v);
 const head = ctoOut ? ["District ID", "District", "First Name", "Last Name", "Email", "Email Inferred", "Phone Number", "Job Title", "Notes"]
   : ["Lead ID", "School", "District", "District ID", "First Name", "Last Name", "Role", "Email", "Email Inferred", "Phone", "Notes"];
